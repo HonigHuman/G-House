@@ -2,12 +2,26 @@
 //-- Libraries Included --------------------------------------------------------------
   #include <ESP8266WiFi.h>    // The Basic Function Of The ESP NOD MCU
   #include <DHTesp.h>  
+  #include <Arduino.h>
 
 //------------------------------------------------------------------------------------
   // Define I/O Pins
-  #define       LED0      4       // WIFI Module LED
+  #define       LED0                  2       // WIFI Module LED
+  #define       LED_ON                LOW     // LED is ON when LED Pin LOW
+  #define       LED_OFF               HIGH    
+  #define       MAX_CONNECT_ATTEMPTS  3
+  #define       CHECK_CONNECT_TIMEOUT 20000
 
 //------------------------------------------------------------------------------------
+  //PFs
+  void Send_Request_To_Server();
+  void Check_WiFi_and_Connect_or_Reconnect();
+  void Send_DHT_Data_To_Server();
+  void Setup_DHT22 ();
+  void Tell_Server_we_are_there ();
+
+
+
   // Authentication Variables
   char*         ssid;            // Wifi Name
   char*         password;        // Wifi Password
@@ -29,6 +43,7 @@
 
 //------------------------------------------------------------------------------------
   // Some Variables
+  unsigned long prevMillis_connect = 0;
   unsigned char buffer[80];
   char result[10];
 
@@ -40,7 +55,8 @@ void setup(){
   
   // setting the mode of pins ---------------------------------------------
   pinMode(LED0, OUTPUT);                          // WIFI OnBoard LED Light
-  digitalWrite(LED0, !LOW);                       // Turn WiFi LED Off
+  digitalWrite(LED0, LED_OFF);                       // Turn WiFi LED Off
+  
 
   Setup_DHT22();
   
@@ -51,12 +67,23 @@ void setup(){
 //====================================================================================
  
 void loop(){
+  unsigned long currentMillis = millis();
+  if (WiFi.status() != WL_CONNECTED and currentMillis - prevMillis_connect > CHECK_CONNECT_TIMEOUT)
+  {
+    Check_WiFi_and_Connect_or_Reconnect();
+  }
   
-  delay(dht.getMinimumSamplingPeriod());
 
-  Send_DHT_Data_To_Server();
-  Send_Request_To_Server();
+  if (WiFi.status() == WL_CONNECTED)
+  {
+    digitalWrite(LED0, LED_ON);
+    delay(1000);
+    digitalWrite(LED0, LED_OFF);
+    delay(4000);
 
+    Send_DHT_Data_To_Server();
+  }
+  
 }
 
 //====================================================================================
@@ -102,18 +129,28 @@ void Check_WiFi_and_Connect_or_Reconnect(){
     WiFi.mode(WIFI_STA);                                // station (Client) Only - to avoid broadcasting an SSID ??
     WiFi.begin("DataTransfer");                         // the SSID that we want to connect to
    
+    int connect_cnt = 0;
     while(WiFi.status() != WL_CONNECTED){
       for(int i=0; i < 10; i++){
-        digitalWrite(LED0, !HIGH);
+        digitalWrite(LED0, LED_OFF);
         delay(250);
-        digitalWrite(LED0, !LOW);
+        digitalWrite(LED0, LED_ON);
         delay(250);
         Serial.print(".");
       }
       Serial.println("");
+      connect_cnt++;
+      if (connect_cnt == MAX_CONNECT_ATTEMPTS)
+      {
+        Serial.println("Maximum Connection attempts, entering sleep for 10s!");
+        prevMillis_connect = millis();
+        digitalWrite(LED0, LED_OFF);
+        return;
+      }
+      
     }
   // stop blinking to indicate if connected -------------------------------
-    digitalWrite(LED0, !HIGH);
+    digitalWrite(LED0, LED_OFF);
     Serial.println("!-- Client Device Connected --!");
 
   // Printing IP Address --------------------------------------------------
@@ -139,12 +176,16 @@ void Send_DHT_Data_To_Server(){
   if(TCP_Client.connect(TCP_Server, TCPPort)){
     float humidity = dht.getHumidity();
     float temperature = dht.getTemperature();
-    Serial.println    (Devicename + " -> DHT Humidity: "+humidity);
-    Serial.println    (Devicename + " -> DHT Temperature: "+temperature);
+    char humStr[80];
+    sprintf(humStr, "Humidity:%.1f", humidity);
+    char tempStr[80];
+    sprintf(tempStr, "Temperature:%.1f", temperature);
 
-    TCP_Client.println (Devicename + " -> DHT Humidity: "+humidity);
-    TCP_Client.println (Devicename + " -> DHT Temperature: "+temperature);
-  }
+    Serial.println    ("Device:"+Devicename+"\n"+tempStr+"\n"+humStr);
+    TCP_Client.println ("Device:"+Devicename+"\n"+tempStr+"\n"+humStr);
+
+    }
+  
   TCP_Client.setNoDelay(1);                                     // allow fast communication?
 }
 

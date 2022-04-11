@@ -28,7 +28,11 @@
 //#include "dht22.h"
 #include "i2c-lcd.h"
 #include "dht22.h"
+#include "UartRingbuffer_multi.h"
+#include "ESP8266_HAL.h"
 #include <stdio.h>
+#include <string.h>
+
 
 /* USER CODE END Includes */
 
@@ -46,6 +50,8 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define pc_uart &huart2
+#define wifi_uart &huart1
 
 /* USER CODE END PD */
 
@@ -57,7 +63,6 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
 float T_meas, Rh_meas;
 DHT_DataTypedef DHT22_Data;
 
@@ -73,6 +78,7 @@ void DHT22_Start (void);
 uint8_t DHT22_Check_Response (void);
 uint8_t DHT22_Read_Byte (void);
 void DHT22_GetData(DHT_DataTypedef *DHT_Data);
+
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -114,7 +120,6 @@ int main(void)
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
 	
-	
 	LCD_init ();
 	LCD_set_cursor_to_line(1); //set pointer to first line
   LCD_send_string (" Welcome ");
@@ -137,7 +142,17 @@ int main(void)
 	LCD_send_data(0x25);
 	//delay(100);
 	//LCD_send_cmd(0x80|0x00);
-
+	
+	//char str[] = "AT+RST\r\n";
+	//HAL_GPIO_WritePin(GPIOA, UART_TRIGGER_Pin, GPIO_PIN_SET);
+	
+	uint8_t data[] = "HELLO? \r\n";
+	HAL_UART_Transmit (&huart1, data, sizeof (data), 10);	
+	
+	
+	//HAL_UART_Transmit(&huart2, (uint8_t *) str, strlen(str), 0xFFFF);
+	ESP_Init("MyceLAN","57290348");
+	printf("ESPinit");
 	
   /* USER CODE END 2 */
 
@@ -145,36 +160,42 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-				
+		
 		HAL_Delay(2000);
-		//LCD_send_cmd(0x80|0x08);
 		DHT22_GetData(&DHT22_Data);
-		
-		
-		
-		
 		T_meas = DHT22_Data.Temperature/10;
 		Rh_meas = DHT22_Data.Humidity/10;
 
-		printf("T = %.1f \n", T_meas);
-		printf("R_h = %.1f \n", Rh_meas);
+		printf("DHT: T = %.1f \n", T_meas);
+		printf("DHT: R_h = %.1f \n", Rh_meas);
 
-		
 		char t_str[20];
 		sprintf(t_str, "%.1f",T_meas);
 		LCD_send_cmd(0x80|0x4e);
 		LCD_send_string(t_str);
 
-		
 		char hum_str[20];
 		sprintf(hum_str, "%.1f",Rh_meas);
 		LCD_send_cmd(0x80|0x62);
 		LCD_send_string(hum_str);
 				
 		HAL_Delay(2000);
-		//LCD_send_cmd(0x80|0x00);
+		/*
+		if (IsDataAvailable(pc_uart))
+	  {
+		  int data = Uart_read(pc_uart);
+		  Uart_write(data, wifi_uart);
+	  }
 
-		
+	  if (IsDataAvailable(wifi_uart))
+	  {
+		  if (Get_after("AT version:", 8, buffer, wifi_uart))
+		  {
+			  Uart_sendstring("AT VERSION=", pc_uart);
+			  Uart_sendstring(buffer, pc_uart);
+		  }
+	  }
+		*/
 		
     /* USER CODE END WHILE */
 
@@ -238,9 +259,6 @@ PUTCHAR_PROTOTYPE
 
   return ch;
 }
-
-
-
 
 
 

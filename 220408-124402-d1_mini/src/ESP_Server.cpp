@@ -1,14 +1,30 @@
 //-- Libraries Included --------------------------------------------------------------
   #include <ESP8266WiFi.h>
+  #include <Arduino.h>
+  #include <uart_register.h>
 
 //------------------------------------------------------------------------------------
   // Define I/O Pins
   #define     LED0        4         // WIFI Module LED
+  #define     TX          1
+  #define     RX          3     
+  #define     RX_FLAG_PIN 5 //Interrupt Trigger Pin
+
+//------------------------------------------------------------------------------------
+  //Private function declaration
+  void SetWifi(char* Name, char* Password);
+  void HandleClients();
+  void sayHi();
+
+
+
 
 //------------------------------------------------------------------------------------
   // Authentication Variables
   char*       ssid;              // SERVER WIFI NAME
   char*       password;          // SERVER PASSWORD
+
+  int RX_FLAG = 0;
 
 //------------------------------------------------------------------------------------
   // WiFi settings
@@ -26,9 +42,12 @@
   // Some Variables
   char result[10];
 
+char buff[4];
+volatile byte indx;
+
 
 void setup(){
-  
+
   // Setting the serial port
   Serial.begin(115200);           // Computer Communication
     
@@ -37,6 +56,7 @@ void setup(){
     
   // setting up a Wifi AccessPoint
   SetWifi("DataTransfer","");
+  //attachInterrupt(digitalPinToInterrupt(RX_FLAG_PIN), sayHi, CHANGE);
 }
 
 //====================================================================================
@@ -44,6 +64,13 @@ void setup(){
 void loop(){
   
   HandleClients(); 
+  if (Serial.available() > 0) {
+    byte c = Serial.read();
+    if (indx < sizeof buff) {
+      buff [indx++] = c; // save data in the next index in the array buff
+    }
+  }
+  
 
 }
 
@@ -140,3 +167,6 @@ unsigned long tNow;
     delay(250);
   }
 }
+
+
+
