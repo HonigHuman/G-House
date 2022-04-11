@@ -22,7 +22,7 @@ Dialog DLL:      TARMCM1.DLL V1.14.4.0
  
 <h2>Project:</h2>
 C:\Users\steff\Documents\Garten\G-House\STM32F030R8\GHouse\MDK-ARM\GHouse.uvprojx
-Project File Date:  04/08/2022
+Project File Date:  04/11/2022
 
 <h2>Output:</h2>
 *** Using Compiler 'V5.06 update 7 (build 960)', folder: 'C:\Keil_v5\ARM\ARMCC\Bin'
@@ -30,11 +30,13 @@ Build target 'GHouse'
 compiling main.c...
 ../Core/Inc/i2c-lcd.h(13): warning:  #1295-D: Deprecated declaration LCD_start_routine - give arg types
   void LCD_start_routine(); //default start up display
-../Core/Src/main.c: 1 warning, 0 errors
+../Core/Src/main.c(298): warning:  #177-D: variable "nl"  was declared but never referenced
+          char nl[] = "\n";
+../Core/Src/main.c: 2 warnings, 0 errors
 linking...
-Program Size: Code=21146 RO-data=382 RW-data=48 ZI-data=3560  
+Program Size: Code=9692 RO-data=236 RW-data=40 ZI-data=3552  
 FromELF: creating hex file...
-"GHouse\GHouse.axf" - 0 Error(s), 1 Warning(s).
+"GHouse\GHouse.axf" - 0 Error(s), 2 Warning(s).
 
 <h2>Software Packages used:</h2>
 
@@ -58,7 +60,7 @@ Package Vendor: Keil
 
    * Component: ARM::CMSIS:CORE:5.5.0
       Include file:  CMSIS\Core\Include\tz_context.h
-Build Time Elapsed:  00:00:00
+Build Time Elapsed:  00:00:01
 </pre>
 </body>
 </html>

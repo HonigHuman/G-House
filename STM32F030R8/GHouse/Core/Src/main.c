@@ -52,6 +52,7 @@
 /* USER CODE BEGIN PD */
 #define pc_uart &huart2
 #define wifi_uart &huart1
+	
 
 /* USER CODE END PD */
 
@@ -65,6 +66,8 @@
 /* USER CODE BEGIN PV */
 float T_meas, Rh_meas;
 DHT_DataTypedef DHT22_Data;
+DHT_DataStore *new_d_ptr, new_data;
+
 
 /* USER CODE END PV */
 
@@ -78,6 +81,10 @@ void DHT22_Start (void);
 uint8_t DHT22_Check_Response (void);
 uint8_t DHT22_Read_Byte (void);
 void DHT22_GetData(DHT_DataTypedef *DHT_Data);
+
+void pollData_UART(DHT_DataStore *data);// uint8_t buffer[]);
+void saveData(char message[], DHT_DataStore *data);//char message[], DHT_DataStore *data);
+void display_DHTData_LCD(DHT_DataStore *data);
 
 /* USER CODE END PFP */
 
@@ -143,17 +150,10 @@ int main(void)
 	//delay(100);
 	//LCD_send_cmd(0x80|0x00);
 	
-	//char str[] = "AT+RST\r\n";
-	//HAL_GPIO_WritePin(GPIOA, UART_TRIGGER_Pin, GPIO_PIN_SET);
-	
-	uint8_t data[] = "HELLO? \r\n";
-	HAL_UART_Transmit (&huart1, data, sizeof (data), 10);	
-	
+	//char str[] = "AT+RST\r\n";	
+
 	
 	//HAL_UART_Transmit(&huart2, (uint8_t *) str, strlen(str), 0xFFFF);
-	ESP_Init("MyceLAN","57290348");
-	printf("ESPinit");
-	
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -161,14 +161,18 @@ int main(void)
   while (1)
   {
 		
+		pollData_UART(&new_data);
+		HAL_UART_Init(pc_uart);		
+		
+		display_DHTData_LCD(&new_data);
+		
 		HAL_Delay(2000);
-		DHT22_GetData(&DHT22_Data);
-		T_meas = DHT22_Data.Temperature/10;
-		Rh_meas = DHT22_Data.Humidity/10;
+		//DHT22_GetData(&DHT22_Data);
+		//T_meas = DHT22_Data.Temperature/10;
+		//Rh_meas = DHT22_Data.Humidity/10;
 
-		printf("DHT: T = %.1f \n", T_meas);
+		/*printf("DHT: T = %.1f \n", T_meas);
 		printf("DHT: R_h = %.1f \n", Rh_meas);
-
 		char t_str[20];
 		sprintf(t_str, "%.1f",T_meas);
 		LCD_send_cmd(0x80|0x4e);
@@ -180,6 +184,9 @@ int main(void)
 		LCD_send_string(hum_str);
 				
 		HAL_Delay(2000);
+		*/
+		
+		
 		/*
 		if (IsDataAvailable(pc_uart))
 	  {
@@ -250,6 +257,77 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+void pollData_UART(DHT_DataStore *data) {
+	char buffer[41];
+	HAL_UART_Init(wifi_uart);
+	HAL_GPIO_WritePin(GPIOA, UART_TRIGGER_Pin, GPIO_PIN_SET);
+	HAL_UART_Receive(wifi_uart, (uint8_t *) buffer, 41, 1000);
+
+	//HAL_UART_Transmit(pc_uart, (uint8_t *) "Received message: \n", sizeof("Received message: \n"), 1000);
+	//HAL_UART_Transmit(pc_uart, (uint8_t *) buffer, 50, 1000);
+	
+	saveData(buffer, data);
+	HAL_GPIO_WritePin(GPIOA, UART_TRIGGER_Pin, GPIO_PIN_RESET);
+	
+}
+
+
+void saveData(char message[], DHT_DataStore *data){//(char message[], DHT_DataStore *data){
+	char *token;
+   char *token_list[5];
+   char *cstr = &message[0];
+
+   /* get the first token */
+   token = strtok(cstr, "+");
+   
+   /* walk through other tokens */
+   int i = 0;
+   while( token != NULL ) {
+      token_list[i] = token;
+      i++;
+      token = strtok(NULL, "+");
+   }
+   int n_tokens = i;
+
+    for(int x = 0; x < n_tokens; x++){
+      char *attr;
+      attr = strtok(token_list[x], ":");
+			printf(attr);
+
+        char *val;
+        char nl[] = "\n";
+        val = strtok(NULL, ":");
+
+        if (strcmp("Device",attr)==0){
+          data->device = val;
+					printf(data->device);
+        }
+        else if (strcmp("Temperature",attr)==0){
+          data->temperature = val;
+					printf(data->temperature);
+        }
+        else if (strcmp("Humidity",attr)==0){
+          data->humidity = val;
+					printf(data->humidity);
+					
+        }      
+    } 
+	//printf(data->humidity);
+}
+
+void display_DHTData_LCD(DHT_DataStore *data){
+		
+	
+		//char t_str = data->temperature;
+		//sprintf(t_str, "%.1f",T_meas);
+		LCD_send_cmd(0x80|0x4e);
+		LCD_send_string(data->temperature);
+
+		//char hum_str[20];
+		//sprintf(hum_str, "%.1f",Rh_meas);
+		LCD_send_cmd(0x80|0x62);
+		LCD_send_string(data->humidity);
+}
 
 PUTCHAR_PROTOTYPE
 {

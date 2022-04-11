@@ -10,6 +10,15 @@ typedef struct
 	char *Hum_str;
 }DHT_DataTypedef;
 
+typedef struct 
+  {
+    int time_index;
+    char *device;
+		char *temperature;
+		char *humidity;
+		char hum[6],temp[6],dev[4];
+  } DHT_DataStore, ptrDHT_DataStore;
+
 extern TIM_HandleTypeDef htim3;
 
 void delay (uint16_t us);

@@ -162,7 +162,7 @@ void Check_WiFi_and_Connect_or_Reconnect(){
     Serial.println(WiFi.localIP());
  
   // conecting as a client -------------------------------------
-    Tell_Server_we_are_there();
+    //Tell_Server_we_are_there();
   }
 }
 
@@ -181,8 +181,8 @@ void Send_DHT_Data_To_Server(){
     char tempStr[80];
     sprintf(tempStr, "Temperature:%.1f", temperature);
 
-    Serial.println    ("Device:"+Devicename+"\n"+tempStr+"\n"+humStr);
-    TCP_Client.println ("Device:"+Devicename+"\n"+tempStr+"\n"+humStr);
+    Serial.println    ("Device:"+Devicename+"+"+tempStr+"+"+humStr);
+    TCP_Client.println ("Device:"+Devicename+"+"+tempStr+"+"+humStr);
 
     }
   

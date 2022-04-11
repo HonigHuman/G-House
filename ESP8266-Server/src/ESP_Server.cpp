@@ -11,7 +11,7 @@
   #define     LED0                  2         // WIFI Module LED
   #define     TX                    1
   #define     RX                    3     
-  #define     DATA_POLLING_FLAG_PIN 5 //Interrupt Trigger Pin
+  #define     DATA_POLLING_FLAG_PIN 5        //Interrupt Trigger Pin (D1)
   #define     LED_ON                LOW     // LED is ON when LED Pin LOW
   #define     LED_OFF               HIGH    
   
@@ -27,9 +27,8 @@
   void SetWifi(char* Name, char* Password);
   void HandleClients();
   void ISR();
-  void sendData_UART(DHT_Data data);
+  void sendData_UART(String message);
   void saveData(String str, DHT_Data data);
-
 
 
 
@@ -53,15 +52,16 @@
 //------------------------------------------------------------------------------------
 
   int DATA_POLLING_FLAG = 0;
-  int REPRINT_MESSAGE_FLAG = 1;
+  int REPRINT_MESSAGE_FLAG = 0;
 
   // Some Variables
   char result[10];
 
-char buff[4];
-volatile byte indx;
+  char buff[4];
+  volatile byte indx;
 
-DHT_Data data[100];
+  DHT_Data saved_data[100];
+  //String current_message;
 
 
 
@@ -79,18 +79,20 @@ void setup(){
 }
 
 //====================================================================================
- 
+String current_message = "Device:GWH+Humidity:58.1+Temperature:22.0";
 void loop(){
   
   HandleClients(); 
-  if (Serial.available() > 0) {
+  /* if (Serial.available() > 0) {
     byte c = Serial.read();
     if (indx < sizeof buff) {
       buff [indx++] = c; // save data in the next index in the array buff
     }
-  }
+  } */
   if (DATA_POLLING_FLAG == 1) {
-    sendData_UART(data[0]);
+    
+    //Serial.println("TX Interrupt!");
+    sendData_UART(current_message);
     DATA_POLLING_FLAG = 0;
   }
 }
@@ -149,7 +151,7 @@ unsigned long tNow;
 /*         // print the message on the screen
         Serial.print("Received packet of size ");
         Serial.println(sizeof(Message));
-          
+        
         // print who sent it
         Serial.print("From ");
         Serial.print(TCP_Client.remoteIP());
@@ -158,9 +160,11 @@ unsigned long tNow;
  */
         // content
         if (REPRINT_MESSAGE_FLAG==1) {
-          Serial.print("Received Message: \n");
+          Serial.print("ESP Received Message: \n");
           Serial.println(message);
         }
+        
+        current_message = message;
         DHT_Data new_data;
         saveData(message, new_data);
         
@@ -193,13 +197,15 @@ unsigned long tNow;
   }
 }
 
-void sendData_UART(DHT_Data data){
+//Sends a dht data struct via UART to STM32
+void sendData_UART(String message){
+  Serial.println(message);
   return;
 }
 
 void saveData(String message, DHT_Data data){
    char *token;
-   char * token_list[5];
+   char *token_list[5];
    char *cstr = &message[0];
 
    /* get the first token */
