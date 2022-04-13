@@ -14,6 +14,8 @@
   #define     DATA_POLLING_FLAG_PIN 5        //Interrupt Trigger Pin (D1)
   #define     LED_ON                LOW     // LED is ON when LED Pin LOW
   #define     LED_OFF               HIGH    
+
+  #define     BAUD_RATE             115200
   
 
   typedef struct 
@@ -61,14 +63,15 @@
   volatile byte indx;
 
   DHT_Data saved_data[100];
-  //String current_message;
+  String current_message;
+  
 
 
 
 void setup(){
 
   // Setting the serial port
-  Serial.begin(115200);           // Computer Communication
+  Serial.begin(BAUD_RATE);           // Computer Communication
     
   // Setting the mode of the pins
   pinMode(LED0, OUTPUT);          // WIFI OnBoard LED Light
@@ -76,10 +79,14 @@ void setup(){
   // setting up a Wifi AccessPoint
   SetWifi("DataTransfer","");
   attachInterrupt(digitalPinToInterrupt(DATA_POLLING_FLAG_PIN), ISR, RISING);
+
+  char buff[43]; 
+  sprintf(buff, "Device:SSS+Humidity:09.9+Temperature:099.9");
+  current_message = (buff);
 }
 
 //====================================================================================
-String current_message = "Device:GWH+Humidity:58.1+Temperature:22.0";
+//String current_message = "Device:-D-_Humidity:09.9_Temperature:099.9";
 void loop(){
   
   HandleClients(); 
@@ -138,6 +145,7 @@ void HandleClients(){
 unsigned long tNow;
        
   if(TCP_SERVER.hasClient()){
+    //Serial.print("Have client!");
     WiFiClient TCP_Client = TCP_SERVER.available();
     TCP_Client.setNoDelay(1);                                          // enable fast communication
     while(1){
@@ -146,7 +154,9 @@ unsigned long tNow;
       //---------------------------------------------------------------
       if(TCP_Client.available()){
         // read the message
-        String message = TCP_Client.readString();
+        String messageStr = TCP_Client.readStringUntil('\n');
+        //char message[43]; 
+        //sprintf(message, "%s", messageStr);
        
 /*         // print the message on the screen
         Serial.print("Received packet of size ");
@@ -161,19 +171,10 @@ unsigned long tNow;
         // content
         if (REPRINT_MESSAGE_FLAG==1) {
           Serial.print("ESP Received Message: \n");
-          Serial.println(message);
+          Serial.println(messageStr);
         }
         
-        current_message = message;
-        DHT_Data new_data;
-        saveData(message, new_data);
-        
-        // generate a response - current run-time -> to identify the speed of the response
-        //tNow=millis();
-        //dtostrf(tNow, 8, 0, result);
-          
-        // reply to the client with a message     
-        //TCP_Client.println(result);                             // important to use println instead of print, as we are looking for a '\r' at the client
+        current_message = messageStr;                          // important to use println instead of print, as we are looking for a '\r' at the client
         TCP_Client.flush();
       }
        
@@ -199,7 +200,7 @@ unsigned long tNow;
 
 //Sends a dht data struct via UART to STM32
 void sendData_UART(String message){
-  Serial.println(message);
+  Serial.print(message);
   return;
 }
 

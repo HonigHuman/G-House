@@ -28,10 +28,11 @@
 //#include "dht22.h"
 #include "i2c-lcd.h"
 #include "dht22.h"
-#include "UartRingbuffer_multi.h"
-#include "ESP8266_HAL.h"
+//#include "UartRingbuffer_multi.h"
+//#include "ESP8266_HAL.h"
 #include <stdio.h>
 #include <string.h>
+#include <cstdlib>
 
 
 /* USER CODE END Includes */
@@ -50,8 +51,9 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define pc_uart &huart2
-#define wifi_uart &huart1
+#define pc_uart 								&huart2
+#define wifi_uart 							&huart1
+#define DATA_MESSAGE_BUFF_SIZE 	42
 	
 
 /* USER CODE END PD */
@@ -66,7 +68,8 @@
 /* USER CODE BEGIN PV */
 float T_meas, Rh_meas;
 DHT_DataTypedef DHT22_Data;
-DHT_DataStore *new_d_ptr, new_data;
+DHT_DataStore init_data = {"-I-", 0.0, -99.9, 5}; 
+DHT_DataStore new_data;
 
 
 /* USER CODE END PV */
@@ -82,9 +85,10 @@ uint8_t DHT22_Check_Response (void);
 uint8_t DHT22_Read_Byte (void);
 void DHT22_GetData(DHT_DataTypedef *DHT_Data);
 
-void pollData_UART(DHT_DataStore *data);// uint8_t buffer[]);
-void saveData(char message[], DHT_DataStore *data);//char message[], DHT_DataStore *data);
+int pollData_UART(DHT_DataStore *data);// uint8_t buffer[]);
+void saveData(char message[], DHT_DataStore *data);
 void display_DHTData_LCD(DHT_DataStore *data);
+void setup_DataDisplay_LCD();
 
 /* USER CODE END PFP */
 
@@ -125,6 +129,7 @@ int main(void)
   MX_USART2_UART_Init();
   MX_I2C2_Init();
   MX_USART1_UART_Init();
+	HAL_UART_DeInit(&huart1);
   /* USER CODE BEGIN 2 */
 	
 	LCD_init ();
@@ -137,54 +142,24 @@ int main(void)
 	
 	HAL_Delay(2000);
 	LCD_clear();	
-	
 	LCD_init ();
-	LCD_set_cursor_to_line(2); //set pointer to first line
-  LCD_send_string ("Temp.:             C");
-	LCD_set_cursor_to_line(4); //set pointer to third line
-  LCD_send_string ("Rel.Hum.:    ");
-	LCD_send_cmd(0x80|0x52);
-	LCD_send_data(0xdf);
-	LCD_send_cmd(0x80|0x67);
-	LCD_send_data(0x25);
-	//delay(100);
-	//LCD_send_cmd(0x80|0x00);
-	
-	//char str[] = "AT+RST\r\n";	
+	setup_DataDisplay_LCD();
+	display_DHTData_LCD(&init_data);
+	HAL_Delay(2000);
 
-	
-	//HAL_UART_Transmit(&huart2, (uint8_t *) str, strlen(str), 0xFFFF);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+		if (pollData_UART(&new_data)==1)
+		{
+			display_DHTData_LCD(&new_data);
+		}
+		HAL_Delay(4000);
 		
-		pollData_UART(&new_data);
-		HAL_UART_Init(pc_uart);		
 		
-		display_DHTData_LCD(&new_data);
-		
-		HAL_Delay(2000);
-		//DHT22_GetData(&DHT22_Data);
-		//T_meas = DHT22_Data.Temperature/10;
-		//Rh_meas = DHT22_Data.Humidity/10;
-
-		/*printf("DHT: T = %.1f \n", T_meas);
-		printf("DHT: R_h = %.1f \n", Rh_meas);
-		char t_str[20];
-		sprintf(t_str, "%.1f",T_meas);
-		LCD_send_cmd(0x80|0x4e);
-		LCD_send_string(t_str);
-
-		char hum_str[20];
-		sprintf(hum_str, "%.1f",Rh_meas);
-		LCD_send_cmd(0x80|0x62);
-		LCD_send_string(hum_str);
-				
-		HAL_Delay(2000);
-		*/
 		
 		
 		/*
@@ -257,17 +232,25 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
-void pollData_UART(DHT_DataStore *data) {
-	char buffer[41];
+int pollData_UART(DHT_DataStore *data) {
+	char buffer[DATA_MESSAGE_BUFF_SIZE]={0};
 	HAL_UART_Init(wifi_uart);
+
 	HAL_GPIO_WritePin(GPIOA, UART_TRIGGER_Pin, GPIO_PIN_SET);
-	HAL_UART_Receive(wifi_uart, (uint8_t *) buffer, 41, 1000);
+	HAL_UART_Receive(wifi_uart, (uint8_t *) buffer, 42, 1000);
 
 	//HAL_UART_Transmit(pc_uart, (uint8_t *) "Received message: \n", sizeof("Received message: \n"), 1000);
-	//HAL_UART_Transmit(pc_uart, (uint8_t *) buffer, 50, 1000);
-	
+	//HAL_UART_Transmit(pc_uart, (uint8_t *) buffer, sizeof(buffer), 1000);
+	if (buffer[0] == 0)
+	{
+		return 0;
+	}
 	saveData(buffer, data);
+	
+	HAL_UART_DeInit(wifi_uart);
+
 	HAL_GPIO_WritePin(GPIOA, UART_TRIGGER_Pin, GPIO_PIN_RESET);
+	return 1;
 	
 }
 
@@ -292,41 +275,80 @@ void saveData(char message[], DHT_DataStore *data){//(char message[], DHT_DataSt
     for(int x = 0; x < n_tokens; x++){
       char *attr;
       attr = strtok(token_list[x], ":");
-			printf(attr);
 
         char *val;
         char nl[] = "\n";
         val = strtok(NULL, ":");
 
         if (strcmp("Device",attr)==0){
-          data->device = val;
-					printf(data->device);
+          data->id_str = val;
+					char *dev = data->id_str;
         }
         else if (strcmp("Temperature",attr)==0){
-          data->temperature = val;
-					printf(data->temperature);
+          data->temperature = atof(val);
+					data->tempStr = val;
+					//printf(data->temperature);
         }
         else if (strcmp("Humidity",attr)==0){
-          data->humidity = val;
-					printf(data->humidity);
+          data->humidity = atof(val);
+					data->humStr = val;
+					//printf(data->humidity);
 					
         }      
     } 
-	//printf(data->humidity);
 }
 
 void display_DHTData_LCD(DHT_DataStore *data){
+		LCD_send_cmd(0x80|0x07);		//clear Devicename
+		LCD_send_string("   ");
+		LCD_send_cmd(0x80|(0x1a));	//clear Temperature
+		LCD_send_string("     ");
+		LCD_send_cmd(0x80|(0x5b));	//clear Humidity
+		LCD_send_string("     ");
 		
+		int offset = 0;
+		float t = data->temperature;
+		float h = data->humidity;
+		
+		LCD_send_cmd(0x80|0x07);	//display Devicename
+		LCD_send_string(data->id_str);
 	
-		//char t_str = data->temperature;
-		//sprintf(t_str, "%.1f",T_meas);
-		LCD_send_cmd(0x80|0x4e);
-		LCD_send_string(data->temperature);
+		if ((t < 0.0 && t > -10.0)||(t >= 10.0)){
+			offset = 1;
+		}
+		else if (t >= 0.0 && t < 10.0){
+			offset = 2;
+		}
+		char t_buffer[6];
+		sprintf(t_buffer, "%.1f", data->temperature);
+		LCD_send_cmd(0x80|(0x1a+offset));	//display Temperature
+		LCD_send_string(t_buffer);
+		
+		if (h < 10.0){
+			offset = 1;
+		}
+		else{
+			offset = 0;
+		}
+		char h_buffer[6];
+		sprintf(h_buffer, "%.1f", data->humidity);
+		LCD_send_cmd(0x80|(0x5b+offset));	//doisplay Humidity
+		LCD_send_string(h_buffer);
+}
 
-		//char hum_str[20];
-		//sprintf(hum_str, "%.1f",Rh_meas);
-		LCD_send_cmd(0x80|0x62);
-		LCD_send_string(data->humidity);
+void setup_DataDisplay_LCD(){
+	LCD_set_cursor_to_line(1); //set pointer to first line
+  LCD_send_string ("ID   :");
+	LCD_set_cursor_to_line(3); //set pointer to first line
+  LCD_send_string ("Temp :");
+	LCD_set_cursor_to_line(4); //set pointer to third line
+  LCD_send_string ("r.Hum:");
+	LCD_send_cmd(0x80|0x26);	
+	LCD_send_data(0xdf);	//degree sign
+	LCD_send_cmd(0x80|0x27);	
+	LCD_send_string("C");	
+	LCD_send_cmd(0x80|0x67);
+	LCD_send_data(0x25);	// percent sign
 }
 
 PUTCHAR_PROTOTYPE

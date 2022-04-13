@@ -12,11 +12,10 @@ typedef struct
 
 typedef struct 
   {
-    int time_index;
-    char *device;
-		char *temperature;
-		char *humidity;
-		char hum[6],temp[6],dev[4];
+    char *id_str;
+		float humidity, temperature;
+		int time_index;
+		char *humStr, *tempStr;
   } DHT_DataStore, ptrDHT_DataStore;
 
 extern TIM_HandleTypeDef htim3;

@@ -68,18 +68,17 @@ void setup(){
  
 void loop(){
   unsigned long currentMillis = millis();
-  if (WiFi.status() != WL_CONNECTED and currentMillis - prevMillis_connect > CHECK_CONNECT_TIMEOUT)
+  if (WiFi.status() != WL_CONNECTED)// and currentMillis - prevMillis_connect > CHECK_CONNECT_TIMEOUT)
   {
     Check_WiFi_and_Connect_or_Reconnect();
   }
   
-
   if (WiFi.status() == WL_CONNECTED)
   {
     digitalWrite(LED0, LED_ON);
     delay(1000);
     digitalWrite(LED0, LED_OFF);
-    delay(4000);
+    delay(2000);
 
     Send_DHT_Data_To_Server();
   }
@@ -140,13 +139,13 @@ void Check_WiFi_and_Connect_or_Reconnect(){
       }
       Serial.println("");
       connect_cnt++;
-      if (connect_cnt == MAX_CONNECT_ATTEMPTS)
+      /*if (connect_cnt == MAX_CONNECT_ATTEMPTS)
       {
         Serial.println("Maximum Connection attempts, entering sleep for 10s!");
         prevMillis_connect = millis();
         digitalWrite(LED0, LED_OFF);
         return;
-      }
+      }*/
       
     }
   // stop blinking to indicate if connected -------------------------------
@@ -176,13 +175,42 @@ void Send_DHT_Data_To_Server(){
   if(TCP_Client.connect(TCP_Server, TCPPort)){
     float humidity = dht.getHumidity();
     float temperature = dht.getTemperature();
-    char humStr[80];
-    sprintf(humStr, "Humidity:%.1f", humidity);
-    char tempStr[80];
-    sprintf(tempStr, "Temperature:%.1f", temperature);
+    if (humidity == NAN || temperature == NAN)
+    {
+      //return;
+    }
+    //char param_del_char = '+';
+    char humStr[6];
+    if (humidity < 10.0)
+    {
+      sprintf(humStr, "0%.1f", humidity);
+    }
+    else 
+    {
+      sprintf(humStr, "%.1f", humidity);
+    }
 
-    Serial.println    ("Device:"+Devicename+"+"+tempStr+"+"+humStr);
-    TCP_Client.println ("Device:"+Devicename+"+"+tempStr+"+"+humStr);
+    char tempStr[6];
+    if (temperature < 10.0 and temperature >= 0.0)
+    {
+      sprintf(tempStr, "00%.1f", temperature);
+    }
+    else if ((temperature < 0.0 and temperature > -10.0)||(temperature > 10.0))
+    {
+      sprintf(tempStr, "0%.1f", temperature);
+    }
+    else
+    {
+      sprintf(tempStr, "%.1f", temperature);
+    }
+    char devStr[4];
+    sprintf(devStr,"%s",Devicename.c_str());
+    
+    char message_buffer[43];
+    sprintf(message_buffer, "Device:%s+Temperature:%s+Humidity:%s\n",devStr,tempStr,humStr);
+    Serial.print     (message_buffer);
+    TCP_Client.print (message_buffer);
+   
 
     }
   
