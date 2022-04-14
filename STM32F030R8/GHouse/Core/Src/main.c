@@ -70,6 +70,11 @@ float T_meas, Rh_meas;
 DHT_DataTypedef DHT22_Data;
 DHT_DataStore init_data = {"-I-", 0.0, -99.9, 5}; 
 DHT_DataStore new_data;
+char wifi_rx_buffer[DATA_MESSAGE_BUFF_SIZE] = {0};
+//char buffer[DATA_MESSAGE_BUFF_SIZE]={0};
+
+int DATA_RXD_FLAG = 0;
+int POLL_DATA_TRIGGER_FLAG = 0;
 
 
 /* USER CODE END PV */
@@ -86,6 +91,7 @@ uint8_t DHT22_Read_Byte (void);
 void DHT22_GetData(DHT_DataTypedef *DHT_Data);
 
 int pollData_UART(DHT_DataStore *data);// uint8_t buffer[]);
+int pollData_UART_IT(DHT_DataStore *data);
 void saveData(char message[], DHT_DataStore *data);
 void display_DHTData_LCD(DHT_DataStore *data);
 void setup_DataDisplay_LCD();
@@ -129,9 +135,10 @@ int main(void)
   MX_USART2_UART_Init();
   MX_I2C2_Init();
   MX_USART1_UART_Init();
-	HAL_UART_DeInit(&huart1);
+  MX_TIM6_Init();
   /* USER CODE BEGIN 2 */
 	
+	HAL_TIM_Base_Start_IT(&htim6);
 	LCD_init ();
 	LCD_set_cursor_to_line(1); //set pointer to first line
   LCD_send_string (" Welcome ");
@@ -146,18 +153,30 @@ int main(void)
 	setup_DataDisplay_LCD();
 	display_DHTData_LCD(&init_data);
 	HAL_Delay(2000);
-
+	//HAL_UART_Receive_IT(wifi_uart, (uint8_t *) wifi_rx_buffer, sizeof(wifi_rx_buffer));
+	HAL_GPIO_WritePin(GPIOA, UART_TRIGGER_Pin, GPIO_PIN_RESET);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-		if (pollData_UART(&new_data)==1)
+		/*if (!HAL_GPIO_ReadPin(GPIOA, UART_TRIGGER_Pin))
 		{
-			display_DHTData_LCD(&new_data);
+			HAL_GPIO_WritePin(GPIOA, UART_TRIGGER_Pin, GPIO_PIN_SET);
+		}*/
+		if (POLL_DATA_TRIGGER_FLAG)
+		{
+			if (pollData_UART(&new_data) == 1)
+			{
+				//saveData(wifi_rx_buffer, &new_data);
+				display_DHTData_LCD(&new_data);
+				//HAL_GPIO_WritePin(GPIOA, UART_TRIGGER_Pin, GPIO_PIN_RESET);
+				DATA_RXD_FLAG = 0;
+			}
+			POLL_DATA_TRIGGER_FLAG = 0;
 		}
-		HAL_Delay(4000);
+		//HAL_Delay(2000);
 		
 		
 		
@@ -232,24 +251,79 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+	if (htim == &htim6)
+	{
+		POLL_DATA_TRIGGER_FLAG = 1;
+		HAL_TIM_Base_Start_IT(&htim6);
+	}
+}
+
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+    HAL_UART_Transmit(&huart2, (uint8_t *) wifi_rx_buffer, sizeof(wifi_rx_buffer), 1000);
+    HAL_UART_Receive_IT(&huart1, (uint8_t *) wifi_rx_buffer, sizeof(wifi_rx_buffer));
+		DATA_RXD_FLAG = 1;
+}
+
 int pollData_UART(DHT_DataStore *data) {
 	char buffer[DATA_MESSAGE_BUFF_SIZE]={0};
 	HAL_UART_Init(wifi_uart);
 
 	HAL_GPIO_WritePin(GPIOA, UART_TRIGGER_Pin, GPIO_PIN_SET);
-	HAL_UART_Receive(wifi_uart, (uint8_t *) buffer, 42, 1000);
+	
+	HAL_UART_Receive(wifi_uart, (uint8_t *) buffer, sizeof(buffer), 1000);
+	HAL_GPIO_WritePin(GPIOA, UART_TRIGGER_Pin, GPIO_PIN_RESET);
+
 
 	//HAL_UART_Transmit(pc_uart, (uint8_t *) "Received message: \n", sizeof("Received message: \n"), 1000);
 	//HAL_UART_Transmit(pc_uart, (uint8_t *) buffer, sizeof(buffer), 1000);
-	if (buffer[0] == 0)
+	
+	/*if (buffer[0] == 0)
 	{
 		return 0;
+	}*/
+	int not_only_zero = 0;
+	int sum = 0;
+	
+	for(int idx = 0; idx < sizeof(buffer)-1; idx++){
+		sum |= buffer[idx];
 	}
-	saveData(buffer, data);
+	if (sum != 0) {
+		not_only_zero = 1;
+	}
+	
+	if (not_only_zero){
+		saveData(buffer, data);
+	}
 	
 	HAL_UART_DeInit(wifi_uart);
 
-	HAL_GPIO_WritePin(GPIOA, UART_TRIGGER_Pin, GPIO_PIN_RESET);
+	//HAL_GPIO_WritePin(GPIOA, UART_TRIGGER_Pin, GPIO_PIN_RESET);
+	return 1;
+	
+}
+
+int pollData_UART_IT(DHT_DataStore *data) {
+	//char buffer[DATA_MESSAGE_BUFF_SIZE]={0};
+	//HAL_UART_Init(wifi_uart);
+
+	HAL_GPIO_WritePin(GPIOA, UART_TRIGGER_Pin, GPIO_PIN_SET);
+	//HAL_UART_Receive(wifi_uart, (uint8_t *) buffer, 42, 1000);
+
+	//HAL_UART_Transmit(pc_uart, (uint8_t *) "Received message: \n", sizeof("Received message: \n"), 1000);
+	//HAL_UART_Transmit(pc_uart, (uint8_t *) buffer, sizeof(buffer), 1000);
+	/*if (buffer[0] == 0)
+	{
+		return 0;
+	} */
+	//saveData(buffer, data);
+	
+	//HAL_UART_DeInit(wifi_uart);
+
+	//HAL_GPIO_WritePin(GPIOA, UART_TRIGGER_Pin, GPIO_PIN_RESET);
 	return 1;
 	
 }
@@ -257,45 +331,45 @@ int pollData_UART(DHT_DataStore *data) {
 
 void saveData(char message[], DHT_DataStore *data){//(char message[], DHT_DataStore *data){
 	char *token;
-   char *token_list[5];
-   char *cstr = &message[0];
+  char *token_list[5];
+  char *cstr = &message[0];
 
    /* get the first token */
-   token = strtok(cstr, "+");
+  token = strtok(cstr, "+");
    
    /* walk through other tokens */
-   int i = 0;
-   while( token != NULL ) {
-      token_list[i] = token;
-      i++;
-      token = strtok(NULL, "+");
-   }
-   int n_tokens = i;
+	int i = 0;
+	while( token != NULL ) {
+		token_list[i] = token;
+    i++;
+    token = strtok(NULL, "+");
+  }
+  int n_tokens = i;
 
-    for(int x = 0; x < n_tokens; x++){
-      char *attr;
-      attr = strtok(token_list[x], ":");
+  for(int x = 0; x < n_tokens; x++){
+		char *attr;
+    attr = strtok(token_list[x], ":");
 
-        char *val;
-        char nl[] = "\n";
-        val = strtok(NULL, ":");
+    char *val;
+		char nl[] = "\n";
+		val = strtok(NULL, ":");
 
-        if (strcmp("Device",attr)==0){
-          data->id_str = val;
-					char *dev = data->id_str;
-        }
-        else if (strcmp("Temperature",attr)==0){
-          data->temperature = atof(val);
-					data->tempStr = val;
+		if (strcmp("Device",attr)==0){
+			if ((strlen(val) == 3)&&(!strcmp("GWH",val))){
+				data->id_str = val;
+			}
+		}
+    else if (strcmp("Temperature",attr)==0){
+      data->temperature = atof(val);
+			data->tempStr = val;
 					//printf(data->temperature);
-        }
-        else if (strcmp("Humidity",attr)==0){
-          data->humidity = atof(val);
-					data->humStr = val;
+    }
+    else if (strcmp("Humidity",attr)==0){
+			data->humidity = atof(val);
+			data->humStr = val;
 					//printf(data->humidity);
-					
-        }      
-    } 
+    }      
+  } 
 }
 
 void display_DHTData_LCD(DHT_DataStore *data){

@@ -191,10 +191,10 @@ unsigned long tNow;
   }
   else{
     // the LED blinks if no clients are available
-    digitalWrite(LED0, HIGH);
+    /*digitalWrite(LED0, HIGH);
     delay(250);
     digitalWrite(LED0, LOW);
-    delay(250);
+    delay(250); */
   }
 }
 
