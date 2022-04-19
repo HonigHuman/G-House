@@ -95,6 +95,7 @@ int pollData_UART_IT(DHT_DataStore *data);
 void saveData(char message[], DHT_DataStore *data);
 void display_DHTData_LCD(DHT_DataStore *data);
 void setup_DataDisplay_LCD();
+int is_empty(char *buf, size_t size);
 
 /* USER CODE END PFP */
 
@@ -139,6 +140,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
 	
 	HAL_TIM_Base_Start_IT(&htim6);
+	
 	LCD_init ();
 	LCD_set_cursor_to_line(1); //set pointer to first line
   LCD_send_string (" Welcome ");
@@ -274,32 +276,22 @@ int pollData_UART(DHT_DataStore *data) {
 
 	HAL_GPIO_WritePin(GPIOA, UART_TRIGGER_Pin, GPIO_PIN_SET);
 	
-	HAL_UART_Receive(wifi_uart, (uint8_t *) buffer, sizeof(buffer), 1000);
+	HAL_UART_Receive(wifi_uart, (uint8_t *) buffer, DATA_MESSAGE_BUFF_SIZE, 1000);
 	HAL_GPIO_WritePin(GPIOA, UART_TRIGGER_Pin, GPIO_PIN_RESET);
 
 
-	//HAL_UART_Transmit(pc_uart, (uint8_t *) "Received message: \n", sizeof("Received message: \n"), 1000);
-	//HAL_UART_Transmit(pc_uart, (uint8_t *) buffer, sizeof(buffer), 1000);
-	
-	/*if (buffer[0] == 0)
-	{
-		return 0;
-	}*/
-	int not_only_zero = 0;
-	int sum = 0;
-	
-	for(int idx = 0; idx < sizeof(buffer)-1; idx++){
-		sum |= buffer[idx];
-	}
-	if (sum != 0) {
-		not_only_zero = 1;
-	}
-	
-	if (not_only_zero){
-		saveData(buffer, data);
-	}
+	HAL_UART_Transmit(pc_uart, (uint8_t *) "Received message: \n", sizeof("Received message: \n"), 1000);
+	HAL_UART_Transmit(pc_uart, (uint8_t *) buffer, DATA_MESSAGE_BUFF_SIZE, 1000);
 	
 	HAL_UART_DeInit(wifi_uart);
+	
+	if (is_empty(buffer, sizeof(buffer)) == 0){	//check if received message is 0 buffer
+		saveData(buffer, data);
+	}
+	else {
+		return 0;
+	}
+
 
 	//HAL_GPIO_WritePin(GPIOA, UART_TRIGGER_Pin, GPIO_PIN_RESET);
 	return 1;
@@ -355,9 +347,8 @@ void saveData(char message[], DHT_DataStore *data){//(char message[], DHT_DataSt
 		val = strtok(NULL, ":");
 
 		if (strcmp("Device",attr)==0){
-			if ((strlen(val) == 3)&&(!strcmp("GWH",val))){
-				data->id_str = val;
-			}
+			strcpy(data->id, val);
+			data->id_str = val;
 		}
     else if (strcmp("Temperature",attr)==0){
       data->temperature = atof(val);
@@ -385,7 +376,7 @@ void display_DHTData_LCD(DHT_DataStore *data){
 		float h = data->humidity;
 		
 		LCD_send_cmd(0x80|0x07);	//display Devicename
-		LCD_send_string(data->id_str);
+		LCD_send_string(data->id);
 	
 		if ((t < 0.0 && t > -10.0)||(t >= 10.0)){
 			offset = 1;
@@ -423,6 +414,11 @@ void setup_DataDisplay_LCD(){
 	LCD_send_string("C");	
 	LCD_send_cmd(0x80|0x67);
 	LCD_send_data(0x25);	// percent sign
+}
+
+int is_empty(char *buf, size_t size)
+{
+    return buf[0] == 0 && !memcmp(buf, buf + 1, size - 1);
 }
 
 PUTCHAR_PROTOTYPE

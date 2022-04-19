@@ -15,7 +15,7 @@
   #define     LED_ON                LOW     // LED is ON when LED Pin LOW
   #define     LED_OFF               HIGH    
 
-  #define     BAUD_RATE             115200
+  #define     BAUD_RATE             9600
   
 
   typedef struct 
@@ -88,6 +88,12 @@ void setup(){
 //====================================================================================
 //String current_message = "Device:-D-_Humidity:09.9_Temperature:099.9";
 void loop(){
+  if (DATA_POLLING_FLAG == 1) {
+    
+    //Serial.println("TX Interrupt!");
+    sendData_UART(current_message);
+    DATA_POLLING_FLAG = 0;
+  }
   
   HandleClients(); 
   /* if (Serial.available() > 0) {
@@ -96,12 +102,6 @@ void loop(){
       buff [indx++] = c; // save data in the next index in the array buff
     }
   } */
-  if (DATA_POLLING_FLAG == 1) {
-    
-    //Serial.println("TX Interrupt!");
-    sendData_UART(current_message);
-    DATA_POLLING_FLAG = 0;
-  }
 }
 
 //====================================================================================
@@ -203,46 +203,6 @@ void sendData_UART(String message){
   Serial.print(message);
   return;
 }
-
-void saveData(String message, DHT_Data data){
-   char *token;
-   char *token_list[5];
-   char *cstr = &message[0];
-
-   /* get the first token */
-   token = strtok(cstr, "\n");
-   
-   /* walk through other tokens */
-   int i = 0;
-   while( token != NULL ) {
-      token_list[i] = token;
-      i++;
-      token = strtok(NULL, "\n");
-   }
-   int n_tokens = i;
-
-    for(int x = 0; x < n_tokens; x++){
-      char *attr;
-      attr = strtok(token_list[x], ":");
-
-        char *val;
-        String nl = "\n";
-        const String attr_str = String(attr);
-        val = strtok(NULL, ":");
-
-        if (attr_str == "Device"){
-          data.device = val;
-        }
-        else if (attr_str == "Temperature"){
-          data.temperature = val;
-        }
-        else if (attr_str == "Humidity"){
-          data.humidity = val;
-        }      
-    }
-   
-  }
-
 
 
 IRAM_ATTR void ISR()
