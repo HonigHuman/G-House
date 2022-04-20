@@ -92,6 +92,7 @@ void DHT22_GetData(DHT_DataTypedef *DHT_Data);
 
 int pollData_UART(DHT_DataStore *data);// uint8_t buffer[]);
 int pollData_UART_IT(DHT_DataStore *data);
+int pollData_UART_Serial(DHT_DataStore *data);
 void saveData(char message[], DHT_DataStore *data);
 void display_DHTData_LCD(DHT_DataStore *data);
 void setup_DataDisplay_LCD();
@@ -181,25 +182,6 @@ int main(void)
 		//HAL_Delay(2000);
 		
 		
-		
-		
-		/*
-		if (IsDataAvailable(pc_uart))
-	  {
-		  int data = Uart_read(pc_uart);
-		  Uart_write(data, wifi_uart);
-	  }
-
-	  if (IsDataAvailable(wifi_uart))
-	  {
-		  if (Get_after("AT version:", 8, buffer, wifi_uart))
-		  {
-			  Uart_sendstring("AT VERSION=", pc_uart);
-			  Uart_sendstring(buffer, pc_uart);
-		  }
-	  }
-		*/
-		
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -276,8 +258,39 @@ int pollData_UART(DHT_DataStore *data) {
 
 	HAL_GPIO_WritePin(GPIOA, UART_TRIGGER_Pin, GPIO_PIN_SET);
 	
-	HAL_UART_Receive(wifi_uart, (uint8_t *) buffer, DATA_MESSAGE_BUFF_SIZE, 1000);
+	HAL_UART_Receive(wifi_uart, (uint8_t *) buffer, DATA_MESSAGE_BUFF_SIZE, 3000);
 	HAL_GPIO_WritePin(GPIOA, UART_TRIGGER_Pin, GPIO_PIN_RESET);
+
+
+	HAL_UART_Transmit(pc_uart, (uint8_t *) "Received message: \n", sizeof("Received message: \n"), 1000);
+	HAL_UART_Transmit(pc_uart, (uint8_t *) buffer, DATA_MESSAGE_BUFF_SIZE, 1000);
+	
+	HAL_UART_DeInit(wifi_uart);
+	
+	if (is_empty(buffer, sizeof(buffer)) == 0){	//check if received message is 0 buffer
+		saveData(buffer, data);
+	}
+	else {
+		return 0;
+	}
+
+
+	//HAL_GPIO_WritePin(GPIOA, UART_TRIGGER_Pin, GPIO_PIN_RESET);
+	return 1;
+	
+}
+
+int pollData_UART_Serial(DHT_DataStore *data) {
+	char buffer[DATA_MESSAGE_BUFF_SIZE]={0};
+	HAL_UART_Init(wifi_uart);
+	//HAL_Delay(100);
+
+	HAL_UART_Transmit(wifi_uart, (uint8_t *) "GETDATA\n", sizeof("GETDATA\n"), 1000);
+
+	//HAL_GPIO_WritePin(GPIOA, UART_TRIGGER_Pin, GPIO_PIN_SET);
+	
+	HAL_UART_Receive(wifi_uart, (uint8_t *) buffer, DATA_MESSAGE_BUFF_SIZE, 3000);
+	//HAL_GPIO_WritePin(GPIOA, UART_TRIGGER_Pin, GPIO_PIN_RESET);
 
 
 	HAL_UART_Transmit(pc_uart, (uint8_t *) "Received message: \n", sizeof("Received message: \n"), 1000);

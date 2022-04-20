@@ -18,19 +18,13 @@
   #define     BAUD_RATE             9600
   
 
-  typedef struct 
-  {
-    int time_index;
-    String device, temperature, humidity;
-  } DHT_Data;
-
 //------------------------------------------------------------------------------------
   //Private function declaration
   void SetWifi(char* Name, char* Password);
   void HandleClients();
   void ISR();
   void sendData_UART(String message);
-  void saveData(String str, DHT_Data data);
+  void serialEventHandler();
 
 
 
@@ -53,19 +47,16 @@
   WiFiClient  TCP_Client[MAXSC];        // THE SERVER CLIENTS Maximum number
 //------------------------------------------------------------------------------------
 
+  // Variables
+  char result[10];
+  volatile byte indx;
+
   int DATA_POLLING_FLAG = 0;
   int REPRINT_MESSAGE_FLAG = 0;
 
-  // Some Variables
-  char result[10];
-
-  char buff[4];
-  volatile byte indx;
-
-  DHT_Data saved_data[100];
+  char init_message[43];
   String current_message;
-  
-
+  String saved_messages[2];
 
 
 void setup(){
@@ -79,10 +70,9 @@ void setup(){
   // setting up a Wifi AccessPoint
   SetWifi("DataTransfer","");
   attachInterrupt(digitalPinToInterrupt(DATA_POLLING_FLAG_PIN), ISR, RISING);
-
-  char buff[43]; 
-  sprintf(buff, "Device:SSS+Humidity:09.9+Temperature:099.9");
-  current_message = (buff);
+ 
+  sprintf(init_message, "Device:SSS+Humidity:09.9+Temperature:099.9");  //setting init message for startup and when no client is connected
+  current_message = init_message;
 }
 
 //====================================================================================
@@ -94,8 +84,12 @@ void loop(){
     sendData_UART(current_message);
     DATA_POLLING_FLAG = 0;
   }
+  else if(Serial.available()){  //listening to STM32 UART CMD (only used when STM32 uses poll_DATA_UART_Serial)
+    serialEventHandler();
+  }
   
   HandleClients(); 
+  
   /* if (Serial.available() > 0) {
     byte c = Serial.read();
     if (indx < sizeof buff) {
@@ -140,6 +134,13 @@ void SetWifi(char* Name, char* Password){
 }
 
 //====================================================================================
+void serialEventHandler(){
+  String input_str = Serial.readStringUntil('\n');
+  if (input_str == "GETDATA" || input_str == "\nGETDATA"){
+    sendData_UART(current_message);
+  }
+}
+
 
 void HandleClients(){
 unsigned long tNow;
@@ -176,6 +177,7 @@ unsigned long tNow;
         
         current_message = messageStr;                          // important to use println instead of print, as we are looking for a '\r' at the client
         TCP_Client.flush();
+        
       }
        
       //---------------------------------------------------------------
@@ -183,13 +185,14 @@ unsigned long tNow;
       //---------------------------------------------------------------     
       if(!TCP_Client || !TCP_Client.connected()){
         // Here We Turn Off The LED To Indicated The Its Disconnectted
-        digitalWrite(LED0, LOW);
+        digitalWrite(LED0, LED_OFF);
         break;
       }
       
     }   
   }
   else{
+    current_message = init_message;
     // the LED blinks if no clients are available
     /*digitalWrite(LED0, HIGH);
     delay(250);
@@ -208,4 +211,6 @@ void sendData_UART(String message){
 IRAM_ATTR void ISR()
 {
   DATA_POLLING_FLAG = 1;
+  sendData_UART(current_message);
+  DATA_POLLING_FLAG = 0;
 }
