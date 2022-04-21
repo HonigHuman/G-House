@@ -22,9 +22,12 @@
   //Private function declaration
   void SetWifi(char* Name, char* Password);
   void HandleClients();
-  void ISR();
+  void poll_Data_ISR();
   void sendData_UART(String message);
   void serialEventHandler();
+  char* get_Device_ID(char message[]);
+  char* copyString(char s[]);
+
 
 
 
@@ -53,9 +56,11 @@
 
   int DATA_POLLING_FLAG = 0;
   int REPRINT_MESSAGE_FLAG = 0;
+  int CURRENT_DATA_SLOT = 0;
 
-  char init_message[43];
-  String current_message;
+
+  String current_msg_GWH;
+  String current_msg_OUT;
   String saved_messages[2];
 
 
@@ -69,33 +74,23 @@ void setup(){
     
   // setting up a Wifi AccessPoint
   SetWifi("DataTransfer","");
-  attachInterrupt(digitalPinToInterrupt(DATA_POLLING_FLAG_PIN), ISR, RISING);
+  attachInterrupt(digitalPinToInterrupt(DATA_POLLING_FLAG_PIN), poll_Data_ISR, RISING);
  
-  sprintf(init_message, "Device:SSS+Humidity:09.9+Temperature:099.9");  //setting init message for startup and when no client is connected
-  current_message = init_message;
+  current_msg_GWH = "Device:SGS+Humidity:00.0+Temperature:000.0";
+  current_msg_OUT = "Device:SOS+Humidity:00.0+Temperature:000.0";
+
 }
 
 //====================================================================================
 //String current_message = "Device:-D-_Humidity:09.9_Temperature:099.9";
 void loop(){
-  if (DATA_POLLING_FLAG == 1) {
-    
-    //Serial.println("TX Interrupt!");
-    sendData_UART(current_message);
-    DATA_POLLING_FLAG = 0;
-  }
-  else if(Serial.available()){  //listening to STM32 UART CMD (only used when STM32 uses poll_DATA_UART_Serial)
+  
+  /*else if(Serial.available()){  //listening to STM32 UART CMD (only used when STM32 uses poll_DATA_UART_Serial)
     serialEventHandler();
-  }
+  } */
   
   HandleClients(); 
-  
-  /* if (Serial.available() > 0) {
-    byte c = Serial.read();
-    if (indx < sizeof buff) {
-      buff [indx++] = c; // save data in the next index in the array buff
-    }
-  } */
+
 }
 
 //====================================================================================
@@ -137,7 +132,7 @@ void SetWifi(char* Name, char* Password){
 void serialEventHandler(){
   String input_str = Serial.readStringUntil('\n');
   if (input_str == "GETDATA" || input_str == "\nGETDATA"){
-    sendData_UART(current_message);
+    sendData_UART(current_msg_GWH);
   }
 }
 
@@ -148,7 +143,8 @@ unsigned long tNow;
   if(TCP_SERVER.hasClient()){
     //Serial.print("Have client!");
     WiFiClient TCP_Client = TCP_SERVER.available();
-    TCP_Client.setNoDelay(1);                                          // enable fast communication
+    TCP_Client.setNoDelay(1);           
+                                // enable fast communication
     while(1){
       //---------------------------------------------------------------
       // If clients are connected
@@ -156,28 +152,25 @@ unsigned long tNow;
       if(TCP_Client.available()){
         // read the message
         String messageStr = TCP_Client.readStringUntil('\n');
-        //char message[43]; 
-        //sprintf(message, "%s", messageStr);
        
-/*         // print the message on the screen
-        Serial.print("Received packet of size ");
-        Serial.println(sizeof(Message));
-        
-        // print who sent it
-        Serial.print("From ");
-        Serial.print(TCP_Client.remoteIP());
-        Serial.print(", port ");
-        Serial.println(TCP_Client.remotePort());
- */
-        // content
         if (REPRINT_MESSAGE_FLAG==1) {
           Serial.print("ESP Received Message: \n");
           Serial.println(messageStr);
         }
+        char msg_cpy[43];         
+        strcpy(msg_cpy, &messageStr[0]);
         
-        current_message = messageStr;                          // important to use println instead of print, as we are looking for a '\r' at the client
+        char *sender_id = get_Device_ID(&msg_cpy[0]);
+        
+        if (strcmp("GWH", sender_id)==0){
+          current_msg_GWH = messageStr;
+        }
+        else if (strcmp("OUT", sender_id)==0){
+          current_msg_OUT = messageStr;
+        }
+                               // important to use println instead of print, as we are looking for a '\r' at the client
         TCP_Client.flush();
-        
+        break;
       }
        
       //---------------------------------------------------------------
@@ -192,7 +185,8 @@ unsigned long tNow;
     }   
   }
   else{
-    current_message = init_message;
+    //Serial.println("Have no Client");
+    //current_message = init_message;
     // the LED blinks if no clients are available
     /*digitalWrite(LED0, HIGH);
     delay(250);
@@ -208,9 +202,53 @@ void sendData_UART(String message){
 }
 
 
-IRAM_ATTR void ISR()
+IRAM_ATTR void poll_Data_ISR()
 {
-  DATA_POLLING_FLAG = 1;
-  sendData_UART(current_message);
-  DATA_POLLING_FLAG = 0;
+  //DATA_POLLING_FLAG = 1;
+  if (CURRENT_DATA_SLOT == 0) {
+      sendData_UART(current_msg_GWH);
+      CURRENT_DATA_SLOT = 1;
+      return;
+    }
+  else if (CURRENT_DATA_SLOT == 1) {
+      sendData_UART(current_msg_OUT);
+      CURRENT_DATA_SLOT = 0;
+      return;
+    }
+  //DATA_POLLING_FLAG = 0;
+}
+
+char *get_Device_ID(char message[]){ 
+  
+	char *token;
+  char *token_list[5];
+  
+  char *cstr = &message[0];
+
+   /* get the first token */
+  token = strtok(cstr, "+");
+   
+   /* walk through other tokens */
+	int i = 0;
+	while( token != NULL ) {
+		token_list[i] = token;
+    i++;
+    token = strtok(NULL, "+");
+  }
+  int n_tokens = i;
+
+  for(int x = 0; x < n_tokens; x++){
+		char *attr;
+    attr = strtok(token_list[x], ":");
+    char *val;
+		val = strtok(NULL, ":");
+
+		if (strcmp("Device",attr)==0){
+
+			//strcpy(ret_id, val);
+		  return val;
+		}      
+  } 
+  char *ret = "...";
+  return ret;
 }

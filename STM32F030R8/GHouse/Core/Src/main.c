@@ -70,6 +70,7 @@ float T_meas, Rh_meas;
 DHT_DataTypedef DHT22_Data;
 DHT_DataStore init_data = {"-I-", 0.0, -99.9, 5}; 
 DHT_DataStore new_data;
+ 
 char wifi_rx_buffer[DATA_MESSAGE_BUFF_SIZE] = {0};
 //char buffer[DATA_MESSAGE_BUFF_SIZE]={0};
 
@@ -377,18 +378,27 @@ void saveData(char message[], DHT_DataStore *data){//(char message[], DHT_DataSt
 }
 
 void display_DHTData_LCD(DHT_DataStore *data){
-		LCD_send_cmd(0x80|0x07);		//clear Devicename
+		int slot_offset;
+		if ((strcmp(data->id,"GWH")==0)||(strcmp(data->id,"SGS")==0)){
+			slot_offset = 6;
+		}
+		else if ((strcmp(data->id,"OUT")==0)||(strcmp(data->id,"SOS")==0)){
+			slot_offset = 0;
+		}
+		else return;
+		
+		LCD_send_cmd(0x80|(0x07+slot_offset));		//clear Devicename
 		LCD_send_string("   ");
-		LCD_send_cmd(0x80|(0x1a));	//clear Temperature
+		LCD_send_cmd(0x80|(0x1a+slot_offset));	//clear Temperature
 		LCD_send_string("     ");
-		LCD_send_cmd(0x80|(0x5b));	//clear Humidity
+		LCD_send_cmd(0x80|(0x5b+slot_offset));	//clear Humidity
 		LCD_send_string("     ");
 		
 		int offset = 0;
 		float t = data->temperature;
 		float h = data->humidity;
 		
-		LCD_send_cmd(0x80|0x07);	//display Devicename
+		LCD_send_cmd(0x80|(0x07+slot_offset));	//display Devicename
 		LCD_send_string(data->id);
 	
 		if ((t < 0.0 && t > -10.0)||(t >= 10.0)){
@@ -399,7 +409,7 @@ void display_DHTData_LCD(DHT_DataStore *data){
 		}
 		char t_buffer[6];
 		sprintf(t_buffer, "%.1f", data->temperature);
-		LCD_send_cmd(0x80|(0x1a+offset));	//display Temperature
+		LCD_send_cmd(0x80|(0x1a+offset+slot_offset));	//display Temperature
 		LCD_send_string(t_buffer);
 		
 		if (h < 10.0){
@@ -410,7 +420,7 @@ void display_DHTData_LCD(DHT_DataStore *data){
 		}
 		char h_buffer[6];
 		sprintf(h_buffer, "%.1f", data->humidity);
-		LCD_send_cmd(0x80|(0x5b+offset));	//doisplay Humidity
+		LCD_send_cmd(0x80|(0x5b+offset+slot_offset));	//doisplay Humidity
 		LCD_send_string(h_buffer);
 }
 

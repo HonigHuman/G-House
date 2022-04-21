@@ -3,7 +3,7 @@
 <title>Static Call Graph - [GHouse\GHouse.axf]</title></head>
 <body><HR>
 <H1>Static Call Graph for image GHouse\GHouse.axf</H1><HR>
-<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5060960: Last Updated: Wed Apr 20 12:15:16 2022
+<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5060960: Last Updated: Thu Apr 21 13:10:42 2022
 <BR><P>
 <H3>Maximum Stack Usage =        328 bytes + Unknown(Cycles, Untraceable Function Pointers)</H3><H3>
 Call chain for Maximum Stack Depth:</H3>
@@ -194,26 +194,27 @@ Global Symbols
 
 <P><STRONG><a name="[ab]"></a>_ll_ushift_r</STRONG> (Thumb, 0 bytes, Stack size 8 bytes, llushr.o(.text), UNUSED)
 
-<P><STRONG><a name="[a2]"></a>strcmp</STRONG> (Thumb, 28 bytes, Stack size 8 bytes, strcmp.o(.text))
+<P><STRONG><a name="[9b]"></a>strcmp</STRONG> (Thumb, 28 bytes, Stack size 8 bytes, strcmp.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 8<LI>Call Chain = strcmp
 </UL>
-<BR>[Called By]<UL><LI><a href="#[a0]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;saveData
+<BR>[Called By]<UL><LI><a href="#[a1]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;saveData
+<LI><a href="#[9a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;display_DHTData_LCD
 </UL>
 
-<P><STRONG><a name="[9f]"></a>memcmp</STRONG> (Thumb, 26 bytes, Stack size 12 bytes, memcmp.o(.text))
+<P><STRONG><a name="[a0]"></a>memcmp</STRONG> (Thumb, 26 bytes, Stack size 12 bytes, memcmp.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 12<LI>Call Chain = memcmp
 </UL>
-<BR>[Called By]<UL><LI><a href="#[9e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;pollData_UART
+<BR>[Called By]<UL><LI><a href="#[9f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;pollData_UART
 </UL>
 
 <P><STRONG><a name="[a3]"></a>strcpy</STRONG> (Thumb, 18 bytes, Stack size 0 bytes, strcpy.o(.text))
-<BR><BR>[Called By]<UL><LI><a href="#[a0]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;saveData
+<BR><BR>[Called By]<UL><LI><a href="#[a1]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;saveData
 </UL>
 
-<P><STRONG><a name="[a1]"></a>strtok</STRONG> (Thumb, 68 bytes, Stack size 16 bytes, strtok.o(.text))
+<P><STRONG><a name="[a2]"></a>strtok</STRONG> (Thumb, 68 bytes, Stack size 16 bytes, strtok.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 16<LI>Call Chain = strtok
 </UL>
-<BR>[Called By]<UL><LI><a href="#[a0]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;saveData
+<BR>[Called By]<UL><LI><a href="#[a1]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;saveData
 </UL>
 
 <P><STRONG><a name="[2e]"></a>__aeabi_dmul</STRONG> (Thumb, 202 bytes, Stack size 72 bytes, dmul.o(.text), UNUSED)
@@ -223,7 +224,7 @@ Global Symbols
 <LI><a href="#[3f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_fp_value
 </UL>
 
-<P><STRONG><a name="[9b]"></a>__aeabi_f2d</STRONG> (Thumb, 40 bytes, Stack size 0 bytes, f2d.o(.text))
+<P><STRONG><a name="[9c]"></a>__aeabi_f2d</STRONG> (Thumb, 40 bytes, Stack size 0 bytes, f2d.o(.text))
 <BR><BR>[Called By]<UL><LI><a href="#[9a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;display_DHTData_LCD
 </UL>
 
@@ -232,7 +233,7 @@ Global Symbols
 </UL>
 <BR>[Calls]<UL><LI><a href="#[31]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_float_round
 </UL>
-<BR>[Called By]<UL><LI><a href="#[a0]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;saveData
+<BR>[Called By]<UL><LI><a href="#[a1]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;saveData
 <LI><a href="#[42]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_scanf_really_real
 </UL>
 
@@ -420,7 +421,7 @@ Global Symbols
 
 <P><STRONG><a name="[82]"></a>HAL_GPIO_WritePin</STRONG> (Thumb, 12 bytes, Stack size 0 bytes, stm32f0xx_hal_gpio.o(i.HAL_GPIO_WritePin))
 <BR><BR>[Called By]<UL><LI><a href="#[81]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;MX_GPIO_Init
-<LI><a href="#[9e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;pollData_UART
+<LI><a href="#[9f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;pollData_UART
 <LI><a href="#[1f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
@@ -664,7 +665,7 @@ Global Symbols
 </UL>
 <BR>[Calls]<UL><LI><a href="#[67]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_UART_MspDeInit
 </UL>
-<BR>[Called By]<UL><LI><a href="#[9e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;pollData_UART
+<BR>[Called By]<UL><LI><a href="#[9f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;pollData_UART
 </UL>
 
 <P><STRONG><a name="[6b]"></a>HAL_UART_ErrorCallback</STRONG> (Thumb, 2 bytes, Stack size 0 bytes, stm32f0xx_hal_uart.o(i.HAL_UART_ErrorCallback))
@@ -696,7 +697,7 @@ Global Symbols
 </UL>
 <BR>[Called By]<UL><LI><a href="#[8c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;MX_USART2_UART_Init
 <LI><a href="#[8b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;MX_USART1_UART_Init
-<LI><a href="#[9e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;pollData_UART
+<LI><a href="#[9f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;pollData_UART
 </UL>
 
 <P><STRONG><a name="[67]"></a>HAL_UART_MspDeInit</STRONG> (Thumb, 68 bytes, Stack size 8 bytes, usart.o(i.HAL_UART_MspDeInit))
@@ -724,7 +725,7 @@ Global Symbols
 <BR>[Calls]<UL><LI><a href="#[45]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_GetTick
 <LI><a href="#[77]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;UART_WaitOnFlagUntilTimeout
 </UL>
-<BR>[Called By]<UL><LI><a href="#[9e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;pollData_UART
+<BR>[Called By]<UL><LI><a href="#[9f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;pollData_UART
 </UL>
 
 <P><STRONG><a name="[78]"></a>HAL_UART_Transmit</STRONG> (Thumb, 228 bytes, Stack size 48 bytes, stm32f0xx_hal_uart.o(i.HAL_UART_Transmit))
@@ -733,7 +734,7 @@ Global Symbols
 <BR>[Calls]<UL><LI><a href="#[45]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_GetTick
 <LI><a href="#[77]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;UART_WaitOnFlagUntilTimeout
 </UL>
-<BR>[Called By]<UL><LI><a href="#[9e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;pollData_UART
+<BR>[Called By]<UL><LI><a href="#[9f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;pollData_UART
 </UL>
 
 <P><STRONG><a name="[6e]"></a>HAL_UART_TxCpltCallback</STRONG> (Thumb, 2 bytes, Stack size 0 bytes, stm32f0xx_hal_uart.o(i.HAL_UART_TxCpltCallback))
@@ -769,7 +770,7 @@ Global Symbols
 </UL>
 <BR>[Calls]<UL><LI><a href="#[48]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_I2C_Master_Transmit
 </UL>
-<BR>[Called By]<UL><LI><a href="#[9d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;setup_DataDisplay_LCD
+<BR>[Called By]<UL><LI><a href="#[9e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;setup_DataDisplay_LCD
 <LI><a href="#[9a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;display_DHTData_LCD
 <LI><a href="#[80]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;LCD_set_cursor_to_line
 <LI><a href="#[7d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;LCD_init
@@ -781,7 +782,7 @@ Global Symbols
 </UL>
 <BR>[Calls]<UL><LI><a href="#[48]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_I2C_Master_Transmit
 </UL>
-<BR>[Called By]<UL><LI><a href="#[9d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;setup_DataDisplay_LCD
+<BR>[Called By]<UL><LI><a href="#[9e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;setup_DataDisplay_LCD
 </UL>
 
 <P><STRONG><a name="[7f]"></a>LCD_send_string</STRONG> (Thumb, 74 bytes, Stack size 32 bytes, i2c-lcd.o(i.LCD_send_string))
@@ -789,7 +790,7 @@ Global Symbols
 </UL>
 <BR>[Calls]<UL><LI><a href="#[48]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_I2C_Master_Transmit
 </UL>
-<BR>[Called By]<UL><LI><a href="#[9d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;setup_DataDisplay_LCD
+<BR>[Called By]<UL><LI><a href="#[9e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;setup_DataDisplay_LCD
 <LI><a href="#[1f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 <LI><a href="#[9a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;display_DHTData_LCD
 </UL>
@@ -799,7 +800,7 @@ Global Symbols
 </UL>
 <BR>[Calls]<UL><LI><a href="#[7c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;LCD_send_cmd
 </UL>
-<BR>[Called By]<UL><LI><a href="#[9d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;setup_DataDisplay_LCD
+<BR>[Called By]<UL><LI><a href="#[9e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;setup_DataDisplay_LCD
 <LI><a href="#[1f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
@@ -834,7 +835,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[1f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
-<P><STRONG><a name="[8a]"></a>MX_TIM6_Init</STRONG> (Thumb, 38 bytes, Stack size 8 bytes, tim.o(i.MX_TIM6_Init))
+<P><STRONG><a name="[8a]"></a>MX_TIM6_Init</STRONG> (Thumb, 36 bytes, Stack size 8 bytes, tim.o(i.MX_TIM6_Init))
 <BR><BR>[Stack]<UL><LI>Max Depth = 40<LI>Call Chain = MX_TIM6_Init &rArr; HAL_TIM_Base_Init &rArr; TIM_Base_SetConfig
 </UL>
 <BR>[Calls]<UL><LI><a href="#[59]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_TIM_Base_Init
@@ -972,7 +973,7 @@ Global Symbols
 
 <P><STRONG><a name="[b2]"></a>__1sprintf</STRONG> (Thumb, 0 bytes, Stack size 24 bytes, printfa.o(i.__0sprintf), UNUSED)
 
-<P><STRONG><a name="[9c]"></a>__2sprintf</STRONG> (Thumb, 0 bytes, Stack size 24 bytes, printfa.o(i.__0sprintf))
+<P><STRONG><a name="[9d]"></a>__2sprintf</STRONG> (Thumb, 0 bytes, Stack size 24 bytes, printfa.o(i.__0sprintf))
 <BR><BR>[Stack]<UL><LI>Max Depth = 24<LI>Call Chain = __2sprintf
 </UL>
 <BR>[Called By]<UL><LI><a href="#[9a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;display_DHTData_LCD
@@ -1017,16 +1018,17 @@ Global Symbols
 <LI><a href="#[99]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__set_errno
 <LI><a href="#[98]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__read_errno
 </UL>
-<BR>[Called By]<UL><LI><a href="#[a0]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;saveData
+<BR>[Called By]<UL><LI><a href="#[a1]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;saveData
 </UL>
 
-<P><STRONG><a name="[9a]"></a>display_DHTData_LCD</STRONG> (Thumb, 178 bytes, Stack size 40 bytes, main.o(i.display_DHTData_LCD))
-<BR><BR>[Stack]<UL><LI>Max Depth = 152<LI>Call Chain = display_DHTData_LCD &rArr; LCD_send_string &rArr; HAL_I2C_Master_Transmit &rArr; I2C_WaitOnTXISFlagUntilTimeout &rArr; I2C_IsAcknowledgeFailed
+<P><STRONG><a name="[9a]"></a>display_DHTData_LCD</STRONG> (Thumb, 248 bytes, Stack size 48 bytes, main.o(i.display_DHTData_LCD))
+<BR><BR>[Stack]<UL><LI>Max Depth = 160<LI>Call Chain = display_DHTData_LCD &rArr; LCD_send_string &rArr; HAL_I2C_Master_Transmit &rArr; I2C_WaitOnTXISFlagUntilTimeout &rArr; I2C_IsAcknowledgeFailed
 </UL>
-<BR>[Calls]<UL><LI><a href="#[9b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_f2d
+<BR>[Calls]<UL><LI><a href="#[9c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_f2d
 <LI><a href="#[7f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;LCD_send_string
 <LI><a href="#[7c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;LCD_send_cmd
-<LI><a href="#[9c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__2sprintf
+<LI><a href="#[9d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__2sprintf
+<LI><a href="#[9b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;strcmp
 </UL>
 <BR>[Called By]<UL><LI><a href="#[1f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
@@ -1042,8 +1044,8 @@ Global Symbols
 <LI><a href="#[81]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;MX_GPIO_Init
 <LI><a href="#[65]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_TIM_Base_Start_IT
 <LI><a href="#[4e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_Init
-<LI><a href="#[9d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;setup_DataDisplay_LCD
-<LI><a href="#[9e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;pollData_UART
+<LI><a href="#[9e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;setup_DataDisplay_LCD
+<LI><a href="#[9f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;pollData_UART
 <LI><a href="#[9a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;display_DHTData_LCD
 <LI><a href="#[8e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SystemClock_Config
 <LI><a href="#[82]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_GPIO_WritePin
@@ -1055,33 +1057,33 @@ Global Symbols
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> entry9a.o(.ARM.Collect$$$$0000000B)
 </UL>
-<P><STRONG><a name="[9e]"></a>pollData_UART</STRONG> (Thumb, 140 bytes, Stack size 56 bytes, main.o(i.pollData_UART))
+<P><STRONG><a name="[9f]"></a>pollData_UART</STRONG> (Thumb, 140 bytes, Stack size 56 bytes, main.o(i.pollData_UART))
 <BR><BR>[Stack]<UL><LI>Max Depth = 328<LI>Call Chain = pollData_UART &rArr; saveData &rArr; atof &rArr; __strtod_int &rArr; _local_sscanf &rArr; _scanf_real
 </UL>
 <BR>[Calls]<UL><LI><a href="#[78]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_UART_Transmit
 <LI><a href="#[76]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_UART_Receive
 <LI><a href="#[6f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_UART_Init
 <LI><a href="#[66]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_UART_DeInit
-<LI><a href="#[a0]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;saveData
+<LI><a href="#[a1]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;saveData
 <LI><a href="#[82]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_GPIO_WritePin
-<LI><a href="#[9f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;memcmp
+<LI><a href="#[a0]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;memcmp
 </UL>
 <BR>[Called By]<UL><LI><a href="#[1f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
-<P><STRONG><a name="[a0]"></a>saveData</STRONG> (Thumb, 158 bytes, Stack size 48 bytes, main.o(i.saveData))
+<P><STRONG><a name="[a1]"></a>saveData</STRONG> (Thumb, 158 bytes, Stack size 48 bytes, main.o(i.saveData))
 <BR><BR>[Stack]<UL><LI>Max Depth = 272<LI>Call Chain = saveData &rArr; atof &rArr; __strtod_int &rArr; _local_sscanf &rArr; _scanf_real
 </UL>
 <BR>[Calls]<UL><LI><a href="#[30]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_d2f
-<LI><a href="#[a1]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;strtok
+<LI><a href="#[a2]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;strtok
 <LI><a href="#[a3]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;strcpy
-<LI><a href="#[a2]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;strcmp
+<LI><a href="#[9b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;strcmp
 <LI><a href="#[97]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;atof
 </UL>
-<BR>[Called By]<UL><LI><a href="#[9e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;pollData_UART
+<BR>[Called By]<UL><LI><a href="#[9f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;pollData_UART
 </UL>
 
-<P><STRONG><a name="[9d]"></a>setup_DataDisplay_LCD</STRONG> (Thumb, 76 bytes, Stack size 8 bytes, main.o(i.setup_DataDisplay_LCD))
+<P><STRONG><a name="[9e]"></a>setup_DataDisplay_LCD</STRONG> (Thumb, 76 bytes, Stack size 8 bytes, main.o(i.setup_DataDisplay_LCD))
 <BR><BR>[Stack]<UL><LI>Max Depth = 120<LI>Call Chain = setup_DataDisplay_LCD &rArr; LCD_send_string &rArr; HAL_I2C_Master_Transmit &rArr; I2C_WaitOnTXISFlagUntilTimeout &rArr; I2C_IsAcknowledgeFailed
 </UL>
 <BR>[Calls]<UL><LI><a href="#[80]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;LCD_set_cursor_to_line

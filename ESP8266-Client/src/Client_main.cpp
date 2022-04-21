@@ -6,11 +6,13 @@
 
 //------------------------------------------------------------------------------------
   // Define I/O Pins
+  #define       DHT_PIN               4
   #define       LED0                  2       // WIFI Module LED
   #define       LED_ON                LOW     // LED is ON when LED Pin LOW
   #define       LED_OFF               HIGH    
   #define       MAX_CONNECT_ATTEMPTS  3
   #define       CHECK_CONNECT_TIMEOUT 20000
+  #define       BAUD_RATE             9600
 
 //------------------------------------------------------------------------------------
   //PFs
@@ -19,7 +21,7 @@
   void Send_DHT_Data_To_Server();
   void Setup_DHT22 ();
   void Tell_Server_we_are_there ();
-
+  String get_Device_ID(char message[]);
 
 
   // Authentication Variables
@@ -32,9 +34,7 @@
   IPAddress     TCP_Server(192, 168, 4, 1);
   IPAddress     TCP_Gateway(192, 168, 4, 1);
   IPAddress     TCP_Subnet(255, 255, 255, 0);
-
   unsigned int  TCPPort = 2390;
-
   WiFiClient    TCP_Client;
   
 //------------------------------------------------------------------------------------
@@ -46,22 +46,40 @@
   unsigned long prevMillis_connect = 0;
   unsigned char buffer[80];
   char result[10];
+  uint64_t SLEEP_PERIOD_S = 30;  //number of seconds to sleep for before sending another data packet
 
 //====================================================================================
 
 void setup(){
   // setting the serial port ----------------------------------------------
-  Serial.begin(115200);  
+  Serial.begin(BAUD_RATE);  
   
   // setting the mode of pins ---------------------------------------------
   pinMode(LED0, OUTPUT);                          // WIFI OnBoard LED Light
-  digitalWrite(LED0, LED_OFF);                       // Turn WiFi LED Off
+  digitalWrite(LED0, LED_ON);
   
 
   Setup_DHT22();
   
   // WiFi Connect ----------------------------------------------------
   Check_WiFi_and_Connect_or_Reconnect();          // Checking For Connection
+
+  if (WiFi.status() == WL_CONNECTED){
+    Send_DHT_Data_To_Server();
+
+    digitalWrite(LED0, LED_OFF);
+    delay(1000);
+    digitalWrite(LED0, LED_ON);                       // Turn WiFi LED Off
+    delay(1000);
+    digitalWrite(LED0, LED_OFF);
+
+    TCP_Client.stop();                                  //Make Sure Everything Is Reset
+    WiFi.disconnect();
+
+    Serial.println("Going to sleep");
+    ESP.deepSleep(SLEEP_PERIOD_S * 1000000);
+    yield();
+  }
 }
 
 //====================================================================================
@@ -75,12 +93,16 @@ void loop(){
   
   if (WiFi.status() == WL_CONNECTED)
   {
-    digitalWrite(LED0, LED_ON);
+    Send_DHT_Data_To_Server();
+
+    digitalWrite(LED0, LED_OFF);
+    delay(1000);
+    digitalWrite(LED0, LED_ON);                       // Turn WiFi LED Off
     delay(1000);
     digitalWrite(LED0, LED_OFF);
-    delay(2000);
 
-    Send_DHT_Data_To_Server();
+    ESP.deepSleep(SLEEP_PERIOD_S * 1e6);
+    yield();
   }
   
 }
@@ -244,3 +266,4 @@ void Setup_DHT22()
   // use this instead: 
   dht.setup(4, DHTesp::DHT22); // Connect DHT sensor to GPIO 17
 }
+
