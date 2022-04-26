@@ -30,15 +30,21 @@ Build target 'GHouse'
 compiling main.c...
 ../Core/Inc/i2c-lcd.h(13): warning:  #1295-D: Deprecated declaration LCD_start_routine - give arg types
   void LCD_start_routine(); //default start up display
-../Core/Src/main.c(99): warning:  #1295-D: Deprecated declaration setup_DataDisplay_LCD - give arg types
+../Core/Src/main.c(100): warning:  #1295-D: Deprecated declaration setup_DataDisplay_LCD - give arg types
   void setup_DataDisplay_LCD();
-../Core/Src/main.c(360): warning:  #177-D: variable "nl"  was declared but never referenced
+../Core/Src/main.c(117): warning:  #177-D: variable "msg"  was declared but never referenced
+  	char msg[30];
+../Core/Src/main.c(118): warning:  #177-D: variable "cmd"  was declared but never referenced
+  	char cmd[50];
+../Core/Src/main.c(119): warning:  #177-D: variable "flag"  was declared but never referenced
+  	int flag = 1;
+../Core/Src/main.c(373): warning:  #177-D: variable "nl"  was declared but never referenced
   		char nl[] = "\n";
-../Core/Src/main.c: 3 warnings, 0 errors
+../Core/Src/main.c: 6 warnings, 0 errors
 linking...
-Program Size: Code=15744 RO-data=300 RW-data=76 ZI-data=3660  
+Program Size: Code=15512 RO-data=300 RW-data=60 ZI-data=1580  
 FromELF: creating hex file...
-"GHouse\GHouse.axf" - 0 Error(s), 3 Warning(s).
+"GHouse\GHouse.axf" - 0 Error(s), 6 Warning(s).
 
 <h2>Software Packages used:</h2>
 
@@ -62,7 +68,7 @@ Package Vendor: Keil
 
    * Component: ARM::CMSIS:CORE:5.5.0
       Include file:  CMSIS\Core\Include\tz_context.h
-Build Time Elapsed:  00:00:01
+Build Time Elapsed:  00:00:00
 </pre>
 </body>
 </html>

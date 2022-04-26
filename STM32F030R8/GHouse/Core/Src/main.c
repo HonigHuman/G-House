@@ -25,11 +25,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-//#include "dht22.h"
 #include "i2c-lcd.h"
 #include "dht22.h"
-//#include "UartRingbuffer_multi.h"
-//#include "ESP8266_HAL.h"
 #include <stdio.h>
 #include <string.h>
 #include <cstdlib>
@@ -72,9 +69,13 @@ DHT_DataStore init_data = {"-I-", 0.0, -99.9, 5};
 DHT_DataStore new_data;
  
 char wifi_rx_buffer[DATA_MESSAGE_BUFF_SIZE] = {0};
-//char buffer[DATA_MESSAGE_BUFF_SIZE]={0};
+
+uint8_t buf[30] = {0};
+
+
 
 int DATA_RXD_FLAG = 0;
+int GSM_TEST_FLAG = 1;
 int POLL_DATA_TRIGGER_FLAG = 0;
 
 
@@ -113,6 +114,9 @@ int is_empty(char *buf, size_t size);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
+	char msg[30];
+	char cmd[50];
+	int flag = 1;
 
   /* USER CODE END 1 */
 
@@ -163,6 +167,7 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+	
   while (1)
   {
 		/*if (!HAL_GPIO_ReadPin(GPIOA, UART_TRIGGER_Pin))
@@ -313,21 +318,29 @@ int pollData_UART_Serial(DHT_DataStore *data) {
 }
 
 int pollData_UART_IT(DHT_DataStore *data) {
-	//char buffer[DATA_MESSAGE_BUFF_SIZE]={0};
-	//HAL_UART_Init(wifi_uart);
+	char buffer[DATA_MESSAGE_BUFF_SIZE]={0};
+	HAL_UART_Init(wifi_uart);
 
 	HAL_GPIO_WritePin(GPIOA, UART_TRIGGER_Pin, GPIO_PIN_SET);
-	//HAL_UART_Receive(wifi_uart, (uint8_t *) buffer, 42, 1000);
-
-	//HAL_UART_Transmit(pc_uart, (uint8_t *) "Received message: \n", sizeof("Received message: \n"), 1000);
-	//HAL_UART_Transmit(pc_uart, (uint8_t *) buffer, sizeof(buffer), 1000);
-	/*if (buffer[0] == 0)
-	{
-		return 0;
-	} */
-	//saveData(buffer, data);
 	
-	//HAL_UART_DeInit(wifi_uart);
+	
+	HAL_UART_Receive_IT(wifi_uart, (uint8_t *) buffer, DATA_MESSAGE_BUFF_SIZE);
+	//HAL_UART_Receive(wifi_uart, (uint8_t *) buffer, DATA_MESSAGE_BUFF_SIZE, 3000);
+	HAL_GPIO_WritePin(GPIOA, UART_TRIGGER_Pin, GPIO_PIN_RESET);
+
+
+	HAL_UART_Transmit(pc_uart, (uint8_t *) "Received message: \n", sizeof("Received message: \n"), 1000);
+	HAL_UART_Transmit(pc_uart, (uint8_t *) buffer, DATA_MESSAGE_BUFF_SIZE, 1000);
+	
+	HAL_UART_DeInit(wifi_uart);
+	
+	if (is_empty(buffer, sizeof(buffer)) == 0){	//check if received message is 0 buffer
+		saveData(buffer, data);
+	}
+	else {
+		return 0;
+	}
+
 
 	//HAL_GPIO_WritePin(GPIOA, UART_TRIGGER_Pin, GPIO_PIN_RESET);
 	return 1;
