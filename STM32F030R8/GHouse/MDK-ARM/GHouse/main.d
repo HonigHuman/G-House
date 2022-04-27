@@ -37,7 +37,6 @@ ghouse\main.o: ../Core/Inc/tim.h
 ghouse\main.o: ../Core/Inc/usart.h
 ghouse\main.o: ../Core/Inc/gpio.h
 ghouse\main.o: ../Core/Inc/i2c-lcd.h
-ghouse\main.o: ../Core/Src/dht22.h
 ghouse\main.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdio.h
 ghouse\main.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\string.h
 ghouse\main.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\cstdlib

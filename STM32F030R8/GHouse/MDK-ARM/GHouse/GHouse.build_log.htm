@@ -22,7 +22,7 @@ Dialog DLL:      TARMCM1.DLL V1.14.4.0
  
 <h2>Project:</h2>
 C:\Users\steff\Documents\Garten\G-House\STM32F030R8\GHouse\MDK-ARM\GHouse.uvprojx
-Project File Date:  04/21/2022
+Project File Date:  04/27/2022
 
 <h2>Output:</h2>
 *** Using Compiler 'V5.06 update 7 (build 960)', folder: 'C:\Keil_v5\ARM\ARMCC\Bin'
@@ -30,21 +30,19 @@ Build target 'GHouse'
 compiling main.c...
 ../Core/Inc/i2c-lcd.h(13): warning:  #1295-D: Deprecated declaration LCD_start_routine - give arg types
   void LCD_start_routine(); //default start up display
-../Core/Src/main.c(100): warning:  #1295-D: Deprecated declaration setup_DataDisplay_LCD - give arg types
+../Core/Src/main.c(108): warning:  #1295-D: Deprecated declaration setup_DataDisplay_LCD - give arg types
   void setup_DataDisplay_LCD();
-../Core/Src/main.c(117): warning:  #177-D: variable "msg"  was declared but never referenced
-  	char msg[30];
-../Core/Src/main.c(118): warning:  #177-D: variable "cmd"  was declared but never referenced
-  	char cmd[50];
-../Core/Src/main.c(119): warning:  #177-D: variable "flag"  was declared but never referenced
-  	int flag = 1;
-../Core/Src/main.c(373): warning:  #177-D: variable "nl"  was declared but never referenced
+../Core/Src/main.c(111): warning:  #1295-D: Deprecated declaration send_GSM_Data - give arg types
+  void send_GSM_Data();
+../Core/Src/main.c(415): warning:  #177-D: variable "nl"  was declared but never referenced
   		char nl[] = "\n";
-../Core/Src/main.c: 6 warnings, 0 errors
+../Core/Src/main.c(540): warning:  #167-D: argument of type "uint8_t *" is incompatible with parameter of type "const char *"
+  	send_String_A6((uint8_t *)ctrlZ, 2000);
+../Core/Src/main.c: 5 warnings, 0 errors
 linking...
-Program Size: Code=15512 RO-data=300 RW-data=60 ZI-data=1580  
+Program Size: Code=17140 RO-data=400 RW-data=100 ZI-data=1812  
 FromELF: creating hex file...
-"GHouse\GHouse.axf" - 0 Error(s), 6 Warning(s).
+"GHouse\GHouse.axf" - 0 Error(s), 5 Warning(s).
 
 <h2>Software Packages used:</h2>
 
