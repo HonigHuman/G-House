@@ -2,9 +2,13 @@
 /** Put this in the src folder **/
 
 #include "i2c-lcd.h"
+#include "i2c.h"
+
 extern I2C_HandleTypeDef hi2c1;  // change your handler here accordingly
+extern uint32_t check;
 
 #define SLAVE_ADDRESS_LCD 0x4E // change this according to ur setup
+#define lcd_i2c						hi2c1
 
 void LCD_send_cmd (char cmd)
 {
@@ -16,8 +20,14 @@ void LCD_send_cmd (char cmd)
 	data_t[1] = data_u|0x08;  //en=0, rs=0
 	data_t[2] = data_l|0x0C;  //en=1, rs=0
 	data_t[3] = data_l|0x08;  //en=0, rs=0
-	HAL_I2C_Master_Transmit (&hi2c1, SLAVE_ADDRESS_LCD,(uint8_t *) data_t, 4, 100);
-}
+	//HAL_I2C_Master_Transmit_DMA(&hi2c1, SLAVE_ADDRESS_LCD,(uint8_t *) data_t, 4);
+	
+	 //__HAL_I2C_CLEAR_FLAG(&lcd_i2c, I2C_FLAG_STOPF);
+	check = I2C2->ISR & (1<<15);
+	
+	HAL_I2C_Master_Transmit (&lcd_i2c, SLAVE_ADDRESS_LCD,(uint8_t *) data_t, 4, 5000);
+	//HAL_I2C_Master_Transmit_IT (&hi2c1, SLAVE_ADDRESS_LCD,(uint8_t *) data_t, 4);
+	}
 
 void LCD_send_data (char data)
 {
@@ -29,7 +39,10 @@ void LCD_send_data (char data)
 	data_t[1] = data_u|0x09;  //en=0, rs=0
 	data_t[2] = data_l|0x0D;  //en=1, rs=0
 	data_t[3] = data_l|0x09;  //en=0, rs=0
-	HAL_I2C_Master_Transmit (&hi2c1, SLAVE_ADDRESS_LCD,(uint8_t *) data_t, 4, 100);
+	//HAL_I2C_Master_Transmit_DMA(&hi2c1, SLAVE_ADDRESS_LCD,(uint8_t *) data_t, 4);
+	
+	HAL_I2C_Master_Transmit (&lcd_i2c, SLAVE_ADDRESS_LCD,(uint8_t *) data_t, 4, 500);
+	//HAL_I2C_Master_Transmit_IT (&hi2c1, SLAVE_ADDRESS_LCD,(uint8_t *) data_t, 4);
 }
 
 void LCD_clear (void)

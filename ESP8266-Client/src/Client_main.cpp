@@ -46,7 +46,7 @@
   unsigned long prevMillis_connect = 0;
   unsigned char buffer[80];
   char result[10];
-  uint64_t SLEEP_PERIOD_S = 30;  //number of seconds to sleep for before sending another data packet
+  uint64_t SLEEP_PERIOD_S = 120;  //number of seconds to sleep for before sending another data packet
 
 //====================================================================================
 

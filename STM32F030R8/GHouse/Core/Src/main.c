@@ -18,18 +18,20 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "i2c.h"
 #include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "i2c-lcd.h"
+//#include "i2c-lcd.h"
 //#include "dht22.h"
 #include <stdio.h>
 #include <string.h>
 #include <cstdlib>
+#include <lcd2004-parallel.h>
+
+
 
 
 /* USER CODE END Includes */
@@ -46,6 +48,11 @@
 #define DATA_MESSAGE_BUFF_SIZE 	42
 #define OUT_DATA_IDX						0
 #define GWH_DATA_IDX						1
+#define GSM_RESET_TIME_MS 			300//reset_A6 pin of gsm A6 pulled low for (ms)
+#define GSM_MAX_SYNC_SENDS			10 		//maximum count of AT sends before resetting GSM module
+#define GSM_PUSH_INTERVAL_MIN		5
+
+
 	
 typedef struct 
   {
@@ -66,7 +73,7 @@ typedef struct
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-char API_KEY[] = "E7BV47IONFYVV2LA";// G-House : "NEX4VYBFJEKPI156";
+	char API_KEY[] = "NEX4VYBFJEKPI156";//Debug: "E7BV47IONFYVV2LA";// G-House : "NEX4VYBFJEKPI156";
 
 DHT_DataStore init_data = {"-I-", 3.3, -99.9, 5}; 
 DHT_DataStore new_data = {"-N-", 3.3, -99.9, 5};
@@ -74,17 +81,23 @@ DHT_DataStore last_OUT_data, last_GWH_data;
 DHT_DataStore *last_data_sets[2] = {&init_data, &init_data};
  
 char wifi_rx_buffer[DATA_MESSAGE_BUFF_SIZE] = {0};
-uint8_t buf[100] = {0};
+volatile uint8_t buf[256] = {0};
+uint8_t one_buf[1] = {0};
 char msg[50];
 char cmd[50];
 int flag = 1;
 int tim15_cnt = 0;
+int cnt = 0;
+uint32_t check;
+
 
 // FLAGS -------------------------------------------------------------
 int DATA_RXD_FLAG = 0;
 int GSM_TEST_FLAG = 1;
 int POLL_DATA_TRIGGER_FLAG = 0;
 int PUSH_DATA_GSM_FLAG = 0;
+int GSM_UART_RXD_ZERO = 0;
+int GSM_UART_ONE_BUFF = 0;
 
 
 /* USER CODE END PV */
@@ -111,7 +124,9 @@ int is_empty(char *buf, size_t size);
 void send_GSM_Data();
 int check_A6(void);
 void send_String_A6(const char* cmd, uint16_t timeout);
+void reset_A6();
 
+//void SWRST_I2C2();
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -153,30 +168,33 @@ int main(void)
   MX_USART1_UART_Init();
   MX_TIM6_Init();
   MX_TIM15_Init();
-  MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
-	
+	HAL_TIM_Base_Start(&htim3);	
 	HAL_TIM_Base_Start_IT(&htim6);
-	
-	LCD_init ();
-	LCD_set_cursor_to_line(1); //set pointer to first line
-  LCD_send_string (" Welcome ");
-	LCD_set_cursor_to_line(2); //set pointer to third line
-  LCD_send_string ("    at   ");
-	LCD_set_cursor_to_line(3); //set pointer to third line
-	LCD_send_string("  G-House ");
-	
 	HAL_TIM_Base_Start_IT(&htim15);
 	
-	HAL_Delay(2000);
-	LCD_clear();	
-	LCD_init ();
+	
+	lcd_init ();
+	lcd_set_cursor_to_line(1); //set pointer to first line
+  lcd_send_string (" Welcome ");
+	lcd_set_cursor_to_line(2); //set pointer to third line
+  lcd_send_string ("    at   ");
+	lcd_set_cursor_to_line(3); //set pointer to third line
+	lcd_send_string("  G-House ");
+	
+	HAL_Delay(1000);
+	lcd_clear();	
+	lcd_init ();
 	setup_DataDisplay_LCD();
-	display_DHTData_LCD(&init_data);
+	//display_DHTData_LCD(&init_data);
+	
 	
 	HAL_Delay(2000);
+	
 	//HAL_UART_Receive_IT(wifi_uart, (uint8_t *) wifi_rx_buffer, sizeof(wifi_rx_buffer));
 	HAL_GPIO_WritePin(GPIOA, UART_TRIGGER_Pin, GPIO_PIN_RESET);
+	reset_A6();
+	
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -184,38 +202,45 @@ int main(void)
 	POLL_DATA_TRIGGER_FLAG = 0;
 	PUSH_DATA_GSM_FLAG = 0;
 	tim15_cnt = 0;
-	int cnt = 0;
-	HAL_I2C_DeInit(&hi2c1);
+	
+	
 	
   while (1)
   {
 		
-		/*if (cnt == 6){
-			PUSH_DATA_GSM_FLAG = 1;
-		}*/
 		/*if (!HAL_GPIO_ReadPin(GPIOA, UART_TRIGGER_Pin))
 		{
 			HAL_GPIO_WritePin(GPIOA, UART_TRIGGER_Pin, GPIO_PIN_SET);
 		}*/
+		if (cnt == 4){
+				PUSH_DATA_GSM_FLAG = 1;
+				tim15_cnt = 0;
+				cnt++;
+			}
+
 		if (POLL_DATA_TRIGGER_FLAG)
 		{
 			cnt++;
+			
 			if (pollData_UART(&new_data) == 1)
 			{
-					//saveData(wifi_rx_buffer, &new_data);
-				//display_DHTData_LCD(&new_data);//&new_data);
-					//HAL_GPIO_WritePin(GPIOA, UART_TRIGGER_Pin, GPIO_PIN_RESET);
+				//saveData(wifi_rx_buffer, &new_data);
+				display_DHTData_LCD(&new_data);//&new_data);
+				//HAL_GPIO_WritePin(GPIOA, UART_TRIGGER_Pin, GPIO_PIN_RESET);
 				DATA_RXD_FLAG++;
 			}
 			POLL_DATA_TRIGGER_FLAG = 0;
 		}
 	if (PUSH_DATA_GSM_FLAG)
 		{
-			HAL_TIM_Base_Stop_IT(&htim6);
-			HAL_TIM_Base_DeInit(&htim6);
+			
+			//HAL_TIM_Base_DeInit(&htim6);
+			
 			send_GSM_Data();
-			HAL_TIM_Base_Init(&htim6);
-			HAL_TIM_Base_Start_IT(&htim6);
+			
+			//HAL_TIM_Base_Init(&htim6);
+			//HAL_TIM_Base_Start_IT(&htim15);
+			
 			PUSH_DATA_GSM_FLAG = 0;
 		}
 		
@@ -257,16 +282,15 @@ void SystemClock_Config(void)
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
                               |RCC_CLOCKTYPE_PCLK1;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
-  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV2;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
 
   if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_1) != HAL_OK)
   {
     Error_Handler();
   }
-  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USART1|RCC_PERIPHCLK_I2C1;
+  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USART1;
   PeriphClkInit.Usart1ClockSelection = RCC_USART1CLKSOURCE_PCLK1;
-  PeriphClkInit.I2c1ClockSelection = RCC_I2C1CLKSOURCE_HSI;
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
   {
     Error_Handler();
@@ -275,30 +299,56 @@ void SystemClock_Config(void)
 
 /* USER CODE BEGIN 4 */
 
+/*void SWRST_I2C2(){
+	I2C2->CR1 &= ~(1<<0);
+	check = I2C2->CR1 & (1);
+	if(check == 0){
+		I2C2->CR1 |= (1<<0);
+	}
+}*/
+
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
 	if (htim == &htim6)
-	{
-		POLL_DATA_TRIGGER_FLAG = 1;
-		HAL_TIM_Base_Start_IT(&htim6);
-	}
-	if (htim == &htim15)
-	{
-		tim15_cnt++;
-		if (tim15_cnt==2){
-			tim15_cnt = 0;
-			PUSH_DATA_GSM_FLAG = 1;
-			HAL_TIM_Base_Start_IT(&htim15);
+		{
+		if( !(PUSH_DATA_GSM_FLAG))
+		{
+			POLL_DATA_TRIGGER_FLAG = 1;
 		}
 	}
+
+	if (htim == &htim15 && !(PUSH_DATA_GSM_FLAG))
+		{
+		tim15_cnt++;
+		if (tim15_cnt == GSM_PUSH_INTERVAL_MIN)
+			{
+			tim15_cnt = 0;
+			PUSH_DATA_GSM_FLAG = 1;
+			__HAL_TIM_SET_COUNTER(&htim15, 0);
+			}
+		}
 }
 
-/*void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
-    HAL_UART_Transmit(&huart2, (uint8_t *) wifi_rx_buffer, sizeof(wifi_rx_buffer), 1000);
-    HAL_UART_Receive_IT(&huart1, (uint8_t *) wifi_rx_buffer, sizeof(wifi_rx_buffer));
-		DATA_RXD_FLAG = 1;
-}*/
+    if (huart == &gsmUART){
+			GSM_UART_RXD_ZERO = 0;
+			GSM_UART_ONE_BUFF = 0;
+			//HAL_UART_Receive_IT (&gsmUART, buf, sizeof(buf));
+			/*if (GSM_UART_RXD_ZERO && GSM_UART_ONE_BUFF){
+				if (one_buf[0] == 0){
+					GSM_UART_RXD_ZERO = 1;
+					HAL_UART_Receive_IT(&gsmUART, one_buf,1);
+				}
+				else {
+					GSM_UART_RXD_ZERO = 0;
+					GSM_UART_ONE_BUFF = 0;
+					HAL_UART_Receive_IT (&gsmUART, buf, sizeof(buf));
+				}
+			}
+			*/
+		}
+}
 
 int pollData_UART(DHT_DataStore *data) {
 	char buffer[DATA_MESSAGE_BUFF_SIZE]={0};
@@ -443,7 +493,8 @@ void saveData(char message[], DHT_DataStore *data){//(char message[], DHT_DataSt
 }
 
 void display_DHTData_LCD(DHT_DataStore *data){
-		HAL_I2C_Init(&hi2c1);
+		//HAL_I2C_Init(&hi2c1);
+		//SWRST_I2C2();
 	
 		int slot_offset;
 		if ((strcmp(data->id,"GWH")==0)||(strcmp(data->id,"SGS")==0)){
@@ -454,19 +505,19 @@ void display_DHTData_LCD(DHT_DataStore *data){
 		}
 		else return;
 		
-		LCD_send_cmd(0x80|(0x07+slot_offset));		//clear Devicename
-		LCD_send_string("   ");
-		LCD_send_cmd(0x80|(0x1a+slot_offset));	//clear Temperature
-		LCD_send_string("     ");
-		LCD_send_cmd(0x80|(0x5b+slot_offset));	//clear Humidity
-		LCD_send_string("     ");
+		lcd_send_cmd(0x80|(0x07+slot_offset));		//clear Devicename
+		lcd_send_string("   ");
+		lcd_send_cmd(0x80|(0x1a+slot_offset));	//clear Temperature
+		lcd_send_string("     ");
+		lcd_send_cmd(0x80|(0x5b+slot_offset));	//clear Humidity
+		lcd_send_string("     ");
 		
 		int offset = 0;
 		float t = data->temperature;
 		float h = data->humidity;
 		
-		LCD_send_cmd(0x80|(0x07+slot_offset));	//display Devicename
-		LCD_send_string(data->id);
+		lcd_send_cmd(0x80|(0x07+slot_offset));	//display Devicename
+		lcd_send_string(data->id);
 	
 		if ((t < 0.0 && t > -10.0)||(t >= 10.0)){
 			offset = 1;
@@ -476,8 +527,8 @@ void display_DHTData_LCD(DHT_DataStore *data){
 		}
 		char t_buffer[6];
 		sprintf(t_buffer, "%.1f", t);
-		LCD_send_cmd(0x80|(0x1a+offset+slot_offset));	//display Temperature
-		LCD_send_string(t_buffer);
+		lcd_send_cmd(0x80|(0x1a+offset+slot_offset));	//display Temperature
+		lcd_send_string(t_buffer);
 		
 		if (h < 10.0){
 			offset = 1;
@@ -487,28 +538,29 @@ void display_DHTData_LCD(DHT_DataStore *data){
 		}
 		char h_buffer[6];
 		sprintf(h_buffer, "%.1f", h);
-		LCD_send_cmd(0x80|(0x5b+offset+slot_offset));	//doisplay Humidity
-		LCD_send_string(h_buffer);
-		HAL_I2C_DeInit(&hi2c1);
+		lcd_send_cmd(0x80|(0x5b+offset+slot_offset));	//doisplay Humidity
+		lcd_send_string(h_buffer);
+		//HAL_I2C_DeInit(&hi2c1);
 }
 
 void setup_DataDisplay_LCD(){
-	LCD_set_cursor_to_line(1); //set pointer to first line
-  LCD_send_string ("ID   :");
-	LCD_set_cursor_to_line(3); //set pointer to first line
-  LCD_send_string ("Temp :");
-	LCD_set_cursor_to_line(4); //set pointer to third line
-  LCD_send_string ("r.Hum:");
-	LCD_send_cmd(0x80|0x26);	
-	LCD_send_data(0xdf);	//degree sign
-	LCD_send_cmd(0x80|0x27);	
-	LCD_send_string("C");	
-	LCD_send_cmd(0x80|0x67);
-	LCD_send_data(0x25);	// percent sign
+	lcd_set_cursor_to_line(1); //set pointer to first line
+  lcd_send_string ("ID   :");
+	lcd_set_cursor_to_line(3); //set pointer to first line
+  lcd_send_string ("Temp :");
+	lcd_set_cursor_to_line(4); //set pointer to third line
+  lcd_send_string ("r.Hum:");
+	lcd_send_cmd(0x80|0x26);	
+	lcd_send_data(0xdf);	//degree sign
+	lcd_send_cmd(0x80|0x27);	
+	lcd_send_string("C");	
+	lcd_send_cmd(0x80|0x67);
+	lcd_send_data(0x25);	// percent sign
 }
 
 void send_GSM_Data(){
 	
+	reset_A6();
 	float temp_OUT = last_data_sets[OUT_DATA_IDX]->temperature;
 	float hum_OUT = last_data_sets[OUT_DATA_IDX]->humidity;
 	float temp_GWH = last_data_sets[GWH_DATA_IDX]->temperature;
@@ -519,10 +571,10 @@ void send_GSM_Data(){
 	if(check_A6()==0){
 		sprintf(msg,"Couldn't synchronize A6.\r\n");
 		//HAL_UART_Transmit(&huart2,(uint8_t *)msg,strlen(msg),1000);
-	}
-		
+	}		
 	send_String_A6("AT+CSQ\r\n", 1000);
 	send_String_A6("AT+CPIN?\r\n", 1000);
+	send_String_A6("AT+CREG=0\r\n", 1000);
 	send_String_A6("AT+CREG?\r\n", 1000);
 	send_String_A6("AT+CGATT=1\r\n", 1000);
 	send_String_A6("AT+CIPMUX=0\r\n", 1000);
@@ -539,48 +591,71 @@ void send_GSM_Data(){
 	char ctrlZ[2] = {(char) 0x1A, (char) 0x0D};
 	send_String_A6((uint8_t *)ctrlZ, 2000);
 	send_String_A6("AT+CIPCLOSE\r\n", 1000);
+	send_String_A6("AT+CIPSHUT\r\n", 1000);
 	HAL_UART_DeInit(&gsmUART);
+	//HAL_UART_AbortReceive_IT(&gsmUART);
+}
+
+void reset_A6 (){
+	HAL_GPIO_TogglePin(GSM_RESET_GPIO_Port, GSM_RESET_Pin);
+	HAL_Delay(GSM_RESET_TIME_MS);
+	HAL_GPIO_TogglePin(GSM_RESET_GPIO_Port, GSM_RESET_Pin);
 }
 
 int check_A6(void){
 	int flag = 1;
-	
+	int send_cnt = 0;
+	memset(buf,0,sizeof(buf));
 	while(flag){
+		memset(buf,0,sizeof(buf));
 		sprintf(cmd,"AT\r\n");
 		//HAL_UART_Transmit(&pcUART,(uint8_t *)cmd,strlen(cmd),1000);
 		HAL_UART_Transmit(&gsmUART,(uint8_t *)cmd,strlen(cmd),1000);
+		
 		HAL_UART_Receive_IT (&gsmUART, buf, sizeof(buf));
-		HAL_Delay(1000);
+		HAL_Delay(750);
+		//HAL_UART_Receive(&gsmUART, buf, 20, 2000);
 		
 		if(strstr((char *)buf,"OK")){
 			sprintf(msg,"Module Connected\r\n");
 			//HAL_UART_Transmit(&pcUART,(uint8_t *)msg,strlen(msg),1000);
-			flag=0;
+			flag = 0;
 		}
 		HAL_Delay(250);
-		//HAL_UART_Transmit(&pcUART,(uint8_t *)buf,sizeof(buf),1000);
-		memset(buf,0,sizeof(buf));
+				
+		send_cnt++;
+		if (send_cnt == 30){	//reset_A6 GSM board if not responding after GSM_MAX_SYNC_SENDS
+			reset_A6();
+			send_cnt = 0;
+		}
 	}
+	//HAL_UART_AbortReceive_IT(&gsmUART);
 	return 1;
 }
 
 void send_String_A6(const char* cmd_str, uint16_t delay){
+	uint8_t buf2[200] = {0};
+	one_buf[0] = 0;
+	GSM_UART_RXD_ZERO = 1;
+	GSM_UART_ONE_BUFF = 1;
+	memset(buf, 0,sizeof(buf));
 	
-	//memset(buf2,0,sizeof(buf2));
 	sprintf(msg, cmd_str);
-	//HAL_UART_Transmit(&huart2,(uint8_t *)msg,strlen(msg),1000);
-	//HAL_UART_Transmit(&huart2,(uint8_t *)"\r\n",sizeof("\r\n"),1000);
+	
 	HAL_UART_Transmit(&gsmUART,(uint8_t *)msg,strlen(msg),1000);
 	HAL_UART_Receive_IT (&gsmUART, buf, sizeof(buf));
 	
-	/*HAL_TIM_Base_Start(&htim3);
-	uint16_t time_start = __HAL_TIM_GET_COUNTER(&htim3);
-	while (__HAL_TIM_GET_COUNTER(&htim3) - time_start < delay);
-	HAL_TIM_Base_Stop(&htim3);*/
+	/*while(GSM_UART_RXD_ZERO){
+		one_buf[0] = 0;
+		HAL_UART_Receive_IT (&gsmUART, one_buf, 1);
+	}
+	GSM_UART_ONE_BUFF = 0;
+	HAL_UART_Receive_IT (&gsmUART, buf2, sizeof(buf2));
+	*/
+	
 	HAL_Delay(delay);
 	
-	//HAL_UART_Transmit(&huart2,(uint8_t *)buf,sizeof(buf),1000);
-	memset(buf,0,sizeof(buf));
+	HAL_UART_AbortReceive_IT (&gsmUART);
 }  
 
 int is_empty(char *buf, size_t size)
