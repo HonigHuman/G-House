@@ -1,9 +1,14 @@
 //Header file 
-  #define       MAX_CONNECT_ATTEMPTS  3
-  #define       CHECK_CONNECT_TIMEOUT 20000
-  #define       BAUD_RATE             9600
+extern const String  Devicename;
 
-  void Send_Request_To_Server();
-  void Check_WiFi_and_Connect_or_Reconnect();
-  void Send_DHT_Data_To_Server();
-  void Tell_Server_we_are_there ();
+#define       LED0                  2       // WIFI Module LED
+#define       LED_ON                LOW     // LED is ON when LED Pin LOW
+#define       LED_OFF               HIGH    
+
+#define       MAX_CONNECT_ATTEMPTS  3
+#define       CHECK_CONNECT_TIMEOUT 20000
+
+void check_WiFi_and_Connect_or_Reconnect();
+int send_Data_To_Server(char []);
+void reset_WiFi_Connection();
+//void tell_Server_we_are_there ();
