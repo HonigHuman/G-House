@@ -34,7 +34,7 @@ void get_DS18_Data_String(float temperature, char mess_buff[]);
   int DISPLAY_ON = 0;
   int DATA_SENT = 0;
   unsigned long startMillis = 0;
-  uint64_t SLEEP_PERIOD_S = 20;  //number of seconds to sleep for before sending another data packet
+  uint64_t SLEEP_PERIOD_S = 240;  //number of seconds to sleep for before sending another data packet
 //---------------------------------------
 
 Adafruit_SSD1306 display(OLED_RESET);
@@ -90,15 +90,8 @@ void setup() {
   }
     
   digitalWrite(LED0, LED_OFF);      
-    /*
-    delay(1000);
-    digitalWrite(LED0, LED_ON);                       // Turn WiFi LED Off
-    delay(1000);
-    digitalWrite(LED0, LED_OFF);*/
+
   reset_WiFi_Connection();
-
-
-
 }
 
 void loop() {
