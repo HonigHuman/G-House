@@ -282,7 +282,7 @@ void send_GSM_Data(){
 	send_String_A6((uint8_t *)ctrlZ, 2000);
 	send_String_A6("AT+CIPCLOSE\r\n", 1000);
 	send_String_A6("AT+CIPSHUT\r\n", 1000);
-	HAL_UART_DeInit(&gsmUART);
+	//HAL_UART_DeInit(&gsmUART);
 	//HAL_UART_AbortReceive_IT(&gsmUART); */
 }
 
@@ -325,6 +325,10 @@ int check_A6(void){
 		}
 	}
 	return 1; 
+}
+
+void send_String_A6(const char* cmd, uint16_t timeout){
+	//
 }
 
 
